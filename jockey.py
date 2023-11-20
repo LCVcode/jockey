@@ -20,9 +20,7 @@ class Unit(NamedTuple):
 
 
 def pretty_print_keys(data: JujuStatus, depth: int = 0) -> None:
-    """
-    Print a dictionary's keys in a heirarchy
-    """
+    """Print a dictionary's keys in a heirarchy."""
     if depth > 3:
         return
 
@@ -41,9 +39,7 @@ def is_app_principal(status: JujuStatus, app_name: str) -> bool:
 def get_principal_unit_for_subordinate(
     status: JujuStatus, unit_name: str
 ) -> str:
-    """
-    Given the name of a subordinate unit
-    """
+    """Get the name of a princpal unit for a given subordinate unit."""
     for app, data in status["applications"].items():
 
         # Skip other subordinate applications
@@ -63,7 +59,10 @@ def get_unit_data(status: JujuStatus, unit_name: str) -> Unit:
     Given a unit name, get a populated Unit object matching that unit.
     """
     app = unit_name.split("/")[0]
+    charm = status["applications"][app]["charm"]
     principal = is_app_principal(status, app)
+
+    # Determine machine number
     if principal:
         machine = status["applications"][app]["units"][unit_name]["machine"]
     else:
@@ -71,7 +70,6 @@ def get_unit_data(status: JujuStatus, unit_name: str) -> Unit:
         p_app = p_unit.split("/")[0]
         machine = status["applications"][p_app]["units"][p_unit]["machine"]
 
-    charm = status["applications"][app]["charm"]
     return Unit(
         name=unit_name,
         app=app,
@@ -99,6 +97,7 @@ def get_all_units(status: JujuStatus) -> Generator[str, None, None]:
             if "subordinates" not in data:
                 continue
 
+            # Generate subordinate units
             for s_unit_name in data["subordinates"]:
                 yield get_unit_data(status, s_unit_name)
 
