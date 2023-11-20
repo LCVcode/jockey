@@ -32,7 +32,7 @@ def cache_juju_status() -> None:
         os.makedirs(JOCKEY_PATH)
 
     status = get_current_juju_status_json()
-    with open(CACHE_PATH, 'w') as file:
+    with open(CACHE_PATH, "w") as file:
         file.write(status)
 
 
@@ -62,4 +62,3 @@ def retrieve_juju_cache() -> Dict[str, Any]:
         status = json.loads(file.read())
 
     return status
-
