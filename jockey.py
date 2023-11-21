@@ -102,13 +102,32 @@ def get_all_units(status: JujuStatus) -> Generator[str, None, None]:
                 yield get_unit_data(status, s_unit_name)
 
 
+GET_MAP = {"unit": get_all_units}
+
+
 def main(args: argparse.Namespace):
-    # First, perform any requested cache refresh
+    # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
+
+    # Get status
     status = retrieve_juju_cache()
 
-    print(tuple(get_all_units(status)))
+    # 'show' is not implemented yet
+    if args.action == "show":
+        raise NotImplementedError()
+
+    assert args.object in JUJU_OBJECTS
+
+    # Get item generation function
+    action = GET_MAP.get(args.object, None)
+    if not action:
+        raise NotImplementedError()
+
+    # Get items of interest
+    items = action(status)
+    for item in items:
+        print(item)
 
 
 if __name__ == "__main__":
