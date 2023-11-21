@@ -1,14 +1,22 @@
 #!/bin/python3
 import argparse
 import json
+import re
 from status_keeper import retrieve_juju_cache, cache_juju_status
-from typing import Any, Dict, NamedTuple, Generator
-
-
-JUJU_OBJECTS = ("charm", "application", "unit", "machine", "ip", "hostname")
+from typing import Any, Dict, NamedTuple, Generator, Optional
 
 
 JujuStatus = Dict[str, Any]
+
+
+JUJU_OBJECTS = {
+    "charm": ("charms",),
+    "application": ("app", "apps", "applications"),
+    "unit": ("units",),
+    "machine": ("machines",),
+    "ip": ("address", "addresses", "ips"),
+    "hostname": ("hostnames", "host", "hosts"),
+}
 
 
 class Unit(NamedTuple):
@@ -29,6 +37,34 @@ def pretty_print_keys(data: JujuStatus, depth: int = 0) -> None:
 
         if isinstance(value, dict):
             pretty_print_keys(data[key], depth=depth + 1)
+
+
+def format_juju_object_name(name: str) -> Optional[str]:
+    """
+    Convert the name of an object type to a uniform format.  If the object type
+    is not a valid Juju object, None will be returned.
+    """
+    name = name.lower()
+    if name in JUJU_OBJECTS:
+        return name
+
+    for obj_name, alternatives in JUJU_OBJECTS.items():
+        if name in alternatives:
+            return obj_name
+
+
+def parse_filter(filter_str):
+    """Parse a single filter string into a tuple (key, operator, value)."""
+    filter_pattern = re.compile(r'(\w+)\s*([=~]|!=)\s*("[^"]+"|[\w\/.-]+)')
+    match = filter_pattern.match(filter_str)
+    if match:
+        key, operator, value = match.groups()
+        key = format_juju_object_name(key)
+        assert key is not None
+        value = value.strip('"')
+        return key, operator, value
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid filter: '{filter_str}'")
 
 
 def is_app_principal(status: JujuStatus, app_name: str) -> bool:
@@ -106,6 +142,7 @@ GET_MAP = {"unit": get_all_units}
 
 
 def main(args: argparse.Namespace):
+    print(args.filters)
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
@@ -135,20 +172,36 @@ if __name__ == "__main__":
         description="Jockey - All your Juju objects at your fingertips."
     )
 
+    # Add cache refresh flag
     parser.add_argument(
         "--refresh", action="store_true", help="Force a cache update"
     )
+
+    # Add verb argument
     verbparser = parser.add_mutually_exclusive_group(required=True)
     verbparser.add_argument(
         "action", choices=["get", "show"], nargs="?", help="Choose an action"
     )
 
+    # Add object type argument
     objectparser = parser.add_mutually_exclusive_group(required=True)
     objectparser.add_argument(
         "object",
-        choices=JUJU_OBJECTS,
+        choices=JUJU_OBJECTS.keys(),
         nargs="?",
         help="Choose an object type to seek",
     )
+
+    # Add filters as positional arguments
+    filters_help = (
+        "Specify filters for the query. Each filter should be in the format"
+        "`key operator value`. Supported operators: = != ~."
+        "For example:"
+        '  app="nova-compute" principal=true hostname~ubun'
+    )
+    parser.add_argument(
+        "filters", type=parse_filter, nargs="*", help=filters_help
+    )
+
     args = parser.parse_args()
     main(args)
