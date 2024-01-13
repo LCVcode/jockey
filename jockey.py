@@ -3,19 +3,19 @@ import argparse
 import json
 import re
 from status_keeper import retrieve_juju_cache, cache_juju_status
-from typing import Any, Dict, NamedTuple, Generator, Optional
+from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
 
 JujuStatus = Dict[str, Any]
 
 
-JUJU_OBJECTS = {
-    "charm": ("charms",),
-    "application": ("app", "apps", "applications"),
-    "unit": ("units",),
-    "machine": ("machines",),
-    "ip": ("address", "addresses", "ips"),
-    "hostname": ("hostnames", "host", "hosts"),
+OBJECTS = {
+    "charm": ("charms", "c"),
+    "application": ("app", "apps", "applications", "a"),
+    "unit": ("units", "u"),
+    "machine": ("machines", "m"),
+    "ip": ("address", "addresses", "ips", "i"),
+    "hostname": ("hostnames", "host", "hosts", "h"),
 }
 
 
@@ -39,30 +39,60 @@ def pretty_print_keys(data: JujuStatus, depth: int = 0) -> None:
             pretty_print_keys(data[key], depth=depth + 1)
 
 
-def format_juju_object_name(name: str) -> Optional[str]:
+def convert_object_abbreviation(abbrev: str) -> Optional[str]:
     """
-    Convert the name of an object type to a uniform format.  If the object type
+    Convert an object type abbreviation into its full name.  If the object type
     is not a valid Juju object, None will be returned.
-    """
-    name = name.lower()
-    if name in JUJU_OBJECTS:
-        return name
 
-    for obj_name, alternatives in JUJU_OBJECTS.items():
-        if name in alternatives:
+    Arguments
+    =========
+    abbrev (str)
+        A possibly abbreviated object name.
+
+    Returns
+    =======
+    object_name (str) [optional]
+        The decoded object abbrevation, if one exists.  May be the same as the
+        abbrev argument.  Is None if abbrev is not a valid object type.
+    """
+    abbrev = abbrev.lower()
+    if abbrev in OBJECTS:
+        return abbrev
+
+    for obj_name, alternatives in OBJECTS.items():
+        if abbrev in alternatives:
             return obj_name
 
 
-def parse_filter(filter_str):
-    """Parse a single filter string into a tuple (key, operator, value)."""
+def parse_filter_string(filter_str: str) -> Tuple[str, str, str]:
+    """
+    Split a filter string into its three parts: object-type, filter-code, and
+    contents.
+
+    Arguments
+    =========
+    filter_str (str)
+        A raw filter string as given to the CLI.
+
+    Returns
+    =======
+    object_type (str)
+        The object type portion of the filter, comprising everything prior to
+        the filter code.
+    filter_code (str)
+        The one or two character filter code (=, ~, !=, or !~).
+    content (str)
+        The content portion of the filter, comprising everything after the
+        filter code.
+    """
     filter_pattern = re.compile(r'(\w+)\s*([=~]|!=)\s*("[^"]+"|[\w\/.-]+)')
     match = filter_pattern.match(filter_str)
     if match:
-        key, operator, value = match.groups()
-        key = format_juju_object_name(key)
-        assert key is not None
-        value = value.strip('"')
-        return key, operator, value
+        object_type, filter_code, content = match.groups()
+        object_type = convert_object_abbreviation(object_type)
+        assert object_type is not None
+        content = value.strip('"')
+        return object_type, filter_code, content
     else:
         raise argparse.ArgumentTypeError(f"Invalid filter: '{filter_str}'")
 
@@ -115,7 +145,7 @@ def get_unit_data(status: JujuStatus, unit_name: str) -> Unit:
     )
 
 
-def get_all_units(status: JujuStatus) -> Generator[str, None, None]:
+def get_all_units(status: JujuStatus) -> Generator[Unit, None, None]:
     """
     Get all units as a generator.
     """
@@ -138,11 +168,28 @@ def get_all_units(status: JujuStatus) -> Generator[str, None, None]:
                 yield get_unit_data(status, s_unit_name)
 
 
-GET_MAP = {"unit": get_all_units}
+def get_filtered_units(
+    status: JujuStatus, filters: List[Tuple[str, str, str]]
+) -> Generator[Unit, None, None]:
+    """
+    Get all units that satisfy a set of filters.
+    """
+    unit_filter_map = {
+        "charm": None,
+        "application": None,
+        "machine": None,
+        "ip": None,
+        "hostname": None,
+    }
+    for unit in get_all_units(status):
+        for key, operator, value in filters:
+            print(key, operator, value)
+
+
+GET_MAP = {"unit": get_filtered_units}
 
 
 def main(args: argparse.Namespace):
-    print(args.filters)
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
@@ -154,7 +201,7 @@ def main(args: argparse.Namespace):
     if args.action == "show":
         raise NotImplementedError()
 
-    assert args.object in JUJU_OBJECTS
+    assert args.object in OBJECTS
 
     # Get item generation function
     action = GET_MAP.get(args.object, None)
@@ -162,7 +209,8 @@ def main(args: argparse.Namespace):
         raise NotImplementedError()
 
     # Get items of interest
-    items = action(status)
+    items = action(status, args.filters)
+    return
     for item in items:
         print(item)
 
@@ -187,7 +235,7 @@ if __name__ == "__main__":
     objectparser = parser.add_mutually_exclusive_group(required=True)
     objectparser.add_argument(
         "object",
-        choices=JUJU_OBJECTS.keys(),
+        choices=OBJECTS.keys(),
         nargs="?",
         help="Choose an object type to seek",
     )
@@ -200,7 +248,7 @@ if __name__ == "__main__":
         '  app="nova-compute" principal=true hostname~ubun'
     )
     parser.add_argument(
-        "filters", type=parse_filter, nargs="*", help=filters_help
+        "filters", type=parse_filter_string, nargs="*", help=filters_help
     )
 
     args = parser.parse_args()
