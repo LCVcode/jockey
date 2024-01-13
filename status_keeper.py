@@ -26,7 +26,8 @@ def get_current_juju_status_json() -> str:
 
 def cache_juju_status() -> None:
     """
-    Cache the current Juju status in json format.
+    Cache the current Juju status in json format.  Creates the jockey directory
+    if it does not already exist.
     """
     if not os.path.exists(JOCKEY_PATH):
         os.makedirs(JOCKEY_PATH)
@@ -36,9 +37,11 @@ def cache_juju_status() -> None:
         file.write(status)
 
 
-def cache_regeneration_needed() -> bool:
+def is_cache_update_needed() -> bool:
     """
-    Check if the Juju cache needs to be generated or regenerated.
+    Check if the Juju cache needs to be generated or regenerated.  Returns True
+    if the cache file does not exist or if it has not been altered in more than
+    300 seconds.
     """
     if not os.path.exists(CACHE_PATH):
         return True
@@ -53,9 +56,10 @@ def cache_regeneration_needed() -> bool:
 
 def retrieve_juju_cache() -> Dict[str, Any]:
     """
-    Get the cached juju status.  Will regenerate cache if needed.
+    Retrieve the cached Juju status.  This will create or refresh the cash, if
+    needed.
     """
-    if cache_regeneration_needed():
+    if is_cache_update_needed():
         cache_juju_status()
 
     with open(CACHE_PATH, "r") as file:
