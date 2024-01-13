@@ -230,12 +230,6 @@ if __name__ == "__main__":
         "--refresh", action="store_true", help="Force a cache update"
     )
 
-    # Add verb argument
-    verbparser = parser.add_mutually_exclusive_group(required=True)
-    verbparser.add_argument(
-        "action", choices=["get", "show"], nargs="?", help="Choose an action"
-    )
-
     # Add object type argument
     objectparser = parser.add_mutually_exclusive_group(required=True)
     objectparser.add_argument(
