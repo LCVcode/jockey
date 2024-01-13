@@ -1,9 +1,14 @@
 #!/bin/python3
+# Jockey is a CLI utility that facilitates quick retrieval of Juju objects that
+# match given filters.
+# Author: Connor Chamberlain
+
 import argparse
 import json
 import re
-from status_keeper import retrieve_juju_cache, cache_juju_status
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
+
+from status_keeper import retrieve_juju_cache, cache_juju_status
 
 
 JujuStatus = Dict[str, Any]
