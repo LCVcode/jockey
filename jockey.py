@@ -24,14 +24,6 @@ OBJECTS = {
 }
 
 
-class Unit(NamedTuple):
-    name: str
-    app: str
-    machine: str
-    charm: str
-    principal: bool
-
-
 def pretty_print_keys(data: JujuStatus, depth: int = 0) -> None:
     """Print a dictionary's keys in a heirarchy."""
     if depth > 3:
@@ -103,7 +95,22 @@ def parse_filter_string(filter_str: str) -> Tuple[str, str, str]:
 
 
 def is_app_principal(status: JujuStatus, app_name: str) -> bool:
-    """Test if a given application is principal."""
+    """
+    Test if a given application is principal.  True indicates principal and
+    False indicates subordinate.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    app_name (str)
+        The name of the application to check.
+
+    Returns
+    =======
+    is_principal (bool)
+        Whether the indicated application is principal.
+    """
     return "subordinate-to" not in status["applications"][app_name]
 
 
@@ -125,36 +132,57 @@ def get_principal_unit_for_subordinate(
     return ""
 
 
-def get_unit_data(status: JujuStatus, unit_name: str) -> Unit:
+def get_applications(status: JujuStatus) -> Generator[str, None, None]:
     """
-    Given a unit name, get a populated Unit object matching that unit.
-    """
-    app = unit_name.split("/")[0]
-    charm = status["applications"][app]["charm"]
-    principal = is_app_principal(status, app)
+    Get all applications in the Juju status by name.
 
-    # Determine machine number
-    if principal:
-        machine = status["applications"][app]["units"][unit_name]["machine"]
-    else:
-        p_unit = get_principal_unit_for_subordinate(status, unit_name)
-        p_app = p_unit.split("/")[0]
-        machine = status["applications"][p_app]["units"][p_unit]["machine"]
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
 
-    return Unit(
-        name=unit_name,
-        app=app,
-        machine=machine,
-        charm=charm,
-        principal=principal,
-    )
-
-
-def get_all_units(status: JujuStatus) -> Generator[Unit, None, None]:
-    """
-    Get all units as a generator.
+    Returns
+    =======
+    application_names (Generator[str])
+        All application names, in no particular order, as a generator.
     """
     for app in status["applications"]:
+        yield app
+
+
+def get_charms(status: JujuStatus) -> Generator[str, None, None]:
+    """
+    Get all charms in the Juju status by name.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    charm_names (Generator[str])
+        All charms names, in no particular order, as a generator.
+    """
+    for app in get_applications(status):
+        yield status["applications"][app]["charm"]
+
+
+def get_units(status: JujuStatus) -> Generator[str, None, None]:
+    """
+    Get all units in the Juju status by name.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    unit_names (Generator[str])
+        All unit names, in no particular order, as a generator.
+    """
+    for app in get_applications(status):
 
         # Skip subordinate applicaitons
         if not is_app_principal(status, app):
@@ -162,36 +190,70 @@ def get_all_units(status: JujuStatus) -> Generator[Unit, None, None]:
 
         for unit_name, data in status["applications"][app]["units"].items():
             # Generate principal unit
-            yield get_unit_data(status, unit_name)
+            yield unit_name
 
             # Check if subordinate units exist
             if "subordinates" not in data:
                 continue
 
             # Generate subordinate units
-            for s_unit_name in data["subordinates"]:
-                yield get_unit_data(status, s_unit_name)
+            for subordinate_unit_name in data["subordinates"]:
+                yield subordinate_unit_name
 
 
-def get_filtered_units(
-    status: JujuStatus, filters: List[Tuple[str, str, str]]
-) -> Generator[Unit, None, None]:
+def get_machines(status: JujuStatus) -> Generator[str, None, None]:
     """
-    Get all units that satisfy a set of filters.
+    Get all machines in the Juju model by index.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    machine_ids (Generator[str])
+        All machine indices, in no particular order, as a generator.
     """
-    unit_filter_map = {
-        "charm": None,
-        "application": None,
-        "machine": None,
-        "ip": None,
-        "hostname": None,
-    }
-    for unit in get_all_units(status):
-        for key, operator, value in filters:
-            print(key, operator, value)
+    for id in status["machines"].keys():
+        yield id
 
 
-GET_MAP = {"unit": get_filtered_units}
+def get_hostnames(status: JujuStatus) -> Generator[str, None, None]:
+    """
+    Get all machine hostnames in the Juju model.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    hostnames (Generator[str])
+        All hostnames, in no particular order, as a generator.
+    """
+    for machine in status["machines"]:
+        yield machine["hostname"]
+
+
+def get_ips(status: JujuStatus) -> Generator[str, None, None]:
+    """
+    Get all machine ips in the Juju model.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    ips (Generator[str])
+        All ips, in no particular order, as a generator.
+    """
+    for machine in status["machines"]:
+        for address in machine["ip-addresses"]:
+            yield address
 
 
 def main(args: argparse.Namespace):
