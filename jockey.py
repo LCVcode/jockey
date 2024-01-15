@@ -256,6 +256,54 @@ def get_ips(status: JujuStatus) -> Generator[str, None, None]:
             yield address
 
 
+def charm_to_applications(
+    status: JujuStatus, charm_name: str
+) -> Generator[str, None, None]:
+    """
+    Given a charm name, get all applications using it, as a generator.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    charm_name (str)
+        The name of the charm to find applications for.
+
+
+    Returns
+    =======
+    applications (Generator[str])
+        All applications that match the given charm name.
+    """
+    for application in status["applications"]:
+        if application["charm"] == charm_name:
+            yield application
+
+
+def application_to_charm(status: JujuStatus, app_name: str) -> Optional[str]:
+    """
+    Given an application name, get the charm it is using, if any.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    app_name (str)
+        The name of the applicaiton to find a charm for.
+
+    Returns
+    =======
+    charm (str) [optional]
+        The name of the charm, if the indicated application exists.
+    """
+    try:
+        application = status["applications"][app_name]
+    except KeyError:
+        return
+
+    return application["charm"]
+
+
 def main(args: argparse.Namespace):
     # Perform any requested cache refresh
     if args.refresh:
