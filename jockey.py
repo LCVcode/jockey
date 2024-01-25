@@ -297,11 +297,58 @@ def application_to_charm(status: JujuStatus, app_name: str) -> Optional[str]:
         The name of the charm, if the indicated application exists.
     """
     try:
-        application = status["applications"][app_name]
+        return status["applications"][app_name]["charm"]
     except KeyError:
         return
 
-    return application["charm"]
+
+def application_to_units(
+    status: JujuStatus, app_name: str
+) -> Generator[str, None, None]:
+    """
+    Given an application name, get all of its untis, as a generator.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    app_name (str)
+        The name of the applicaiton to find a units for.
+
+    Returns
+    =======
+    units (Generator[str])
+        All units of the given application.
+    """
+    for application, data in status["applications"].items():
+
+        if application != app_name:
+            continue
+
+        for unit_name in application["units"].keys():
+            yield unit_name
+
+
+def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
+    """
+    Given a unit name, get its application name.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    unit_name (str)
+        The name of the unit to find an application for.
+
+    Returns
+    =======
+    application (str) [optional]
+        The name of the corresponding application.
+    """
+    app_name = unit_name.split("/")[0]
+
+    if app_name in status["applications"]:
+        return app_name
 
 
 def main(args: argparse.Namespace):
