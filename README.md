@@ -17,23 +17,13 @@ Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju obj
 
 Example `get` commands:
 
-`$ ./jockey.py get units`
-`$ ./jockey.py get units charm="ceph-osd"`
-`$ ./jockey.py get charms machine=1`
-`$ ./jockey.py get app charm="charm-nrpe" machine="4/lxd/2"`
-`$ ./jockey.py get units app!="nova" principal=true hostname~"blrt"`
-
-### Show commands (NOT IMPLEMENTED YET):
-
-Example `show` commands:
-
-`$ ./jockey.py unit show <unit-name>`
-`$ ./jockey.py app show <app-name>`
-`$ ./jockey.py machine show <machine-name>`
-`$ ./jockey.py charm show <charm-name>`
+`$ ./jockey.py units`
+`$ ./jockey.py units charm=ceph-osd`
+`$ ./jockey.py charms machine=1`
+`$ ./jockey.py app charm=charm-nrpe machine=4/lxd/2`
+`$ ./jockey.py units app!=nova principal=true hostname~blrt`
 
 ## Wishlist:
 
-* Implemented "does not contant" operator `!~`
 * Allow comma-delimited selection of multiple object types:
     `$ ./jockey.py get unit,app`
