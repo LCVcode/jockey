@@ -4,14 +4,22 @@
 # Author: Connor Chamberlain
 
 import argparse
+from enum import Enum
 import json
 import re
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
-from status_keeper import retrieve_juju_cache, cache_juju_status
+from jockey.status_keeper import retrieve_juju_cache, cache_juju_status
 
 
 JujuStatus = Dict[str, Any]
+
+
+class FilterMode(Enum):
+    EQUALS = "="
+    NOT_EQUALS = "!="
+    CONTAINS = "~"
+    NOT_CONTAINS = "!~"
 
 
 OBJECTS = {
@@ -61,37 +69,53 @@ def convert_object_abbreviation(abbrev: str) -> Optional[str]:
             return obj_name
 
 
-def parse_filter_string(filter_str: str) -> Tuple[str, str, str]:
+def parse_filter_string(
+    filter_str: str,
+) -> Tuple[str, FilterMode, str]:
     """
-    Split a filter string into its three parts: object-type, filter-code, and
-    contents.
+    Parse a filter string down into its object type, filter mode, and content.
 
     Arguments
     =========
     filter_str (str)
-        A raw filter string as given to the CLI.
+        The filter string.
 
     Returns
     =======
     object_type (str)
-        The object type portion of the filter, comprising everything prior to
-        the filter code.
-    filter_code (str)
-        The one or two character filter code (=, ~, !=, or !~).
+        The object type of the filter.  May be "charm", "application", "unit",
+        "machine", "ip", or "hostname".
+    mode (FilterMode)
+        FilterMode of the filter.
     content (str)
-        The content portion of the filter, comprising everything after the
-        filter code.
+        Content of the filter string, which may be any string that doesn't
+        include blacklisted characters.
     """
-    filter_pattern = re.compile(r'(\w+)\s*([=~]|!=)\s*("[^"]+"|[\w\/.-]+)')
-    match = filter_pattern.match(filter_str)
-    if match:
-        object_type, filter_code, content = match.groups()
-        object_type = convert_object_abbreviation(object_type)
-        assert object_type is not None
-        content = value.strip('"')
-        return object_type, filter_code, content
-    else:
-        raise argparse.ArgumentTypeError(f"Invalid filter: '{filter_str}'")
+
+    filter_code_pattern = re.compile(r"[=!~]+")
+
+    filter_codes = filter_code_pattern.findall(filter_str)
+    assert len(filter_codes) == 1, "Incorrect number of filter codes detected."
+
+    match = filter_code_pattern.search(filter_str)
+
+    object_type = convert_object_abbreviation(filter_str[: match.start()])
+    assert object_type, "Invalid object type detected in filter string."
+
+    filter_mode = next(
+        (mode for mode in FilterMode if mode.value == match.group()), None
+    )
+    assert filter_mode, f"Invalid filter mode detected: {match.group()}."
+
+    content = filter_str[match.end() :]
+    assert content, "Empty content detected in filter string."
+
+    char_blacklist = ("_", ":", ";", "\\", "\t", "\n", ",")
+    assert not any(
+        char in char_blacklist for char in content
+    ), "Blacklisted characters detected in filter string content."
+
+    return object_type, filter_mode, content
 
 
 def is_app_principal(status: JujuStatus, app_name: str) -> bool:
