@@ -284,7 +284,8 @@ def charm_to_applications(
     status: JujuStatus, charm_name: str
 ) -> Generator[str, None, None]:
     """
-    Given a charm name, get all applications using it, as a generator.
+    Given a charm name, get all applications using it, as a generator. If no
+    matching charm is found, the generator will be empty.
 
     Arguments
     =========
@@ -330,7 +331,8 @@ def application_to_units(
     status: JujuStatus, app_name: str
 ) -> Generator[str, None, None]:
     """
-    Given an application name, get all of its untis, as a generator.
+    Given an application name, get all of its untis, as a generator.  If no
+    matching application is found, the generator will be empty.
 
     Arguments
     =========
