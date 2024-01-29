@@ -9,7 +9,7 @@ import re
 from enum import Enum
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
-from status_keeper import (
+from jockey.status_keeper import (
     retrieve_juju_cache,
     cache_juju_status,
     read_local_juju_status_file,
@@ -26,14 +26,13 @@ class FilterMode(Enum):
     NOT_CONTAINS = "!~"
 
 
-OBJECTS = {
-    "charm": ("charms", "c"),
-    "application": ("app", "apps", "applications", "a"),
-    "unit": ("units", "u"),
-    "machine": ("machines", "m"),
-    "ip": ("address", "addresses", "ips", "i"),
-    "hostname": ("hostnames", "host", "hosts", "h"),
-}
+class ObjectType(Enum):
+    CHARM = ("charms", "charm", "c")
+    APP = ("app", "apps", "application", "applications", "a")
+    UNIT = ("units", "unit", "u")
+    MACHINE = ("machines", "machine", "m")
+    IP = ("address", "addresses", "ips", "ip", "i")
+    HOSTNAME = ("hostnames", "hostname", "host", "hosts", "h")
 
 
 def pretty_print_keys(data: JujuStatus, depth: int = 1) -> None:
@@ -48,9 +47,9 @@ def pretty_print_keys(data: JujuStatus, depth: int = 1) -> None:
             pretty_print_keys(data[key], depth=depth - 1)
 
 
-def convert_object_abbreviation(abbrev: str) -> Optional[str]:
+def convert_object_abbreviation(abbrev: str) -> Optional[ObjectType]:
     """
-    Convert an object type abbreviation into its full name.  If the object type
+    Convert an object type abbreviation into an ObjectType.  If the abbreviation
     is not a valid Juju object, None will be returned.
 
     Arguments
@@ -60,17 +59,13 @@ def convert_object_abbreviation(abbrev: str) -> Optional[str]:
 
     Returns
     =======
-    object_name (str) [optional]
-        The decoded object abbrevation, if one exists.  May be the same as the
-        abbrev argument.  Is None if abbrev is not a valid object type.
+    object_type (ObjectType) [optional]
+        The ObjectType corresponding with the given abbrevation, if any.
     """
     abbrev = abbrev.lower()
-    if abbrev in OBJECTS:
-        return abbrev
-
-    for obj_name, alternatives in OBJECTS.items():
-        if abbrev in alternatives:
-            return obj_name
+    return next(
+        (obj_type for obj_type in ObjectType if abbrev in obj_type.value), None
+    )
 
 
 def parse_filter_string(
@@ -410,8 +405,6 @@ def main(args: argparse.Namespace):
         if not args.file
         else read_local_juju_status_file(args.file)
     )
-
-    pretty_print_keys(status)
 
 
 if __name__ == "__main__":

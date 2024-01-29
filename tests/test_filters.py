@@ -1,5 +1,5 @@
 import pytest
-from jockey.jockey import parse_filter_string, FilterMode
+from jockey.jockey import parse_filter_string, FilterMode, ObjectType
 
 
 def test_filter_mode_retrieval():
@@ -9,21 +9,33 @@ def test_filter_mode_retrieval():
         next(mode for mode in FilterMode if mode.value == "~")
         == FilterMode.CONTAINS
     )
+    assert (
+        next(mode for mode in FilterMode if mode.value == "!~")
+        == FilterMode.NOT_CONTAINS
+    )
+    assert (
+        next(mode for mode in FilterMode if mode.value == "=")
+        == FilterMode.EQUALS
+    )
+    assert (
+        next(mode for mode in FilterMode if mode.value == "!=")
+        == FilterMode.NOT_EQUALS
+    )
 
 
 def test_valid_filters():
     """Test that valid filter strings work."""
 
     valid_filters = (
-        ("u~hw-health", "unit", FilterMode.CONTAINS, "hw-health"),
+        ("u~hw-health", ObjectType.UNIT, FilterMode.CONTAINS, "hw-health"),
         (
             "app!=nrpe-host",
-            "application",
+            ObjectType.APP,
             FilterMode.NOT_EQUALS,
             "nrpe-host",
         ),
-        ("charm!~nova", "charm", FilterMode.NOT_CONTAINS, "nova"),
-        ("ip=127.0.0.1", "ip", FilterMode.EQUALS, "127.0.0.1"),
+        ("charm!~nova", ObjectType.CHARM, FilterMode.NOT_CONTAINS, "nova"),
+        ("ip=127.0.0.1", ObjectType.IP, FilterMode.EQUALS, "127.0.0.1"),
     )
     for filter_str, object_type, mode, content in valid_filters:
         assert parse_filter_string(filter_str) == (
