@@ -66,3 +66,14 @@ def retrieve_juju_cache() -> Dict[str, Any]:
         status = json.loads(file.read())
 
     return status
+
+
+def read_local_juju_status_file(filepath: str) -> Dict[str, Any]:
+    """
+    Import Juju status from a local JSON file.
+    """
+    filepath = os.path.abspath(filepath.name)
+    with open(filepath, "r") as file:
+        status = json.loads(file.read())
+
+    return status

@@ -4,12 +4,16 @@
 # Author: Connor Chamberlain
 
 import argparse
-from enum import Enum
 import json
 import re
+from enum import Enum
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
-from jockey.status_keeper import retrieve_juju_cache, cache_juju_status
+from status_keeper import (
+    retrieve_juju_cache,
+    cache_juju_status,
+    read_local_juju_status_file,
+)
 
 
 JujuStatus = Dict[str, Any]
@@ -32,16 +36,16 @@ OBJECTS = {
 }
 
 
-def pretty_print_keys(data: JujuStatus, depth: int = 0) -> None:
+def pretty_print_keys(data: JujuStatus, depth: int = 1) -> None:
     """Print a dictionary's keys in a heirarchy."""
-    if depth > 3:
+    if depth < 1:
         return
 
     for key, value in data.items():
         print(" |" * depth + key)
 
         if isinstance(value, dict):
-            pretty_print_keys(data[key], depth=depth + 1)
+            pretty_print_keys(data[key], depth=depth - 1)
 
 
 def convert_object_abbreviation(abbrev: str) -> Optional[str]:
@@ -377,30 +381,37 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
         return app_name
 
 
+def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
+    """
+    Given a unit name, get the ID of the machine it is running on, if any.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    unit_name (str)
+        The name of the unit.
+
+    Returns
+    =======
+    machine_id (str) [optional]
+        The ID of the corresponding machine.
+    """
+
+
 def main(args: argparse.Namespace):
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
 
     # Get status
-    status = retrieve_juju_cache()
+    status = (
+        retrieve_juju_cache()
+        if not args.file
+        else read_local_juju_status_file(args.file)
+    )
 
-    # 'show' is not implemented yet
-    if args.action == "show":
-        raise NotImplementedError()
-
-    assert args.object in OBJECTS
-
-    # Get item generation function
-    action = GET_MAP.get(args.object, None)
-    if not action:
-        raise NotImplementedError()
-
-    # Get items of interest
-    items = action(status, args.filters)
-    return
-    for item in items:
-        print(item)
+    pretty_print_keys(status)
 
 
 if __name__ == "__main__":
@@ -427,10 +438,18 @@ if __name__ == "__main__":
         "Specify filters for the query. Each filter should be in the format"
         "`key operator value`. Supported operators: = != ~."
         "For example:"
-        '  app="nova-compute" principal=true hostname~ubun'
+        "  app=nova-compute hostname~ubun"
     )
     parser.add_argument(
         "filters", type=parse_filter_string, nargs="*", help=filters_help
+    )
+
+    # Optional import from a json file
+    parser.add_argument(
+        "-f",
+        "--file",
+        type=argparse.FileType("r"),
+        help="Use a local Juju status JSON file",
     )
 
     args = parser.parse_args()
