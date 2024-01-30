@@ -379,6 +379,7 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
 def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
     """
     Given a unit name, get the ID of the machine it is running on, if any.
+    Currently only works on units from principal applications.
 
     Arguments
     =========
@@ -392,6 +393,47 @@ def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
     machine_id (str) [optional]
         The ID of the corresponding machine.
     """
+    app = unit_to_application(status, unit_name)
+
+    if not is_app_principal(status, app):
+        # TODO write a subordinate_to_principal function to get principal units
+        raise NotImplemented
+
+    return status["applications"][app]["units"][unit_name]["machine"]
+
+
+def machine_to_units(
+    status: JujuStatus, machine: str
+) -> Generator[str, None, None]:
+    """
+    Given an machine id, get all of its units, as a generator.  If no matching
+    units are found, the generator will be empty.
+
+    Arguments
+    =========
+    machine (str)
+        The ID of the machine to use.
+
+    Returns
+    =======
+    units (Generator[str])
+        All units on the given machine.
+    """
+
+    for unit in get_units(status):
+
+        # Skip subordinate units
+        app = unit_to_application(status, unit)
+        if not is_app_principal(status, app):
+            continue
+
+        if unit_to_machine(status, unit) == machine:
+            yield unit
+
+            for subordinate_unit in status["applications"][app]["units"][unit][
+                "subordinates"
+            ]:
+                yield subordinate_unit
 
 
 def main(args: argparse.Namespace):
@@ -406,7 +448,7 @@ def main(args: argparse.Namespace):
         else read_local_juju_status_file(args.file)
     )
 
-    pretty_print_keys(status)
+    print(list(machine_to_units(status, "1")))
 
 
 if __name__ == "__main__":
