@@ -9,7 +9,7 @@ import re
 from enum import Enum
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
-from jockey.status_keeper import (
+from status_keeper import (
     retrieve_juju_cache,
     cache_juju_status,
     read_local_juju_status_file,
@@ -406,6 +406,8 @@ def main(args: argparse.Namespace):
         else read_local_juju_status_file(args.file)
     )
 
+    pretty_print_keys(status)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -421,7 +423,9 @@ if __name__ == "__main__":
     objectparser = parser.add_mutually_exclusive_group(required=True)
     objectparser.add_argument(
         "object",
-        choices=OBJECTS.keys(),
+        choices=[
+            abbrev for object_type in ObjectType for abbrev in object_type.value
+        ],
         nargs="?",
         help="Choose an object type to seek",
     )
