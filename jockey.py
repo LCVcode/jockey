@@ -475,8 +475,43 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
             return machine
 
 
+def machine_to_hostname(status: JujuStatus, machine: str) -> str:
+    """
+    Given an machine id, get its hostname.
+
+    Arguments
+    =========
+    machine (str)
+        The ID of the machine to use.
+
+    Returns
+    =======
+    hostname (str)
+        The machine's hostname.
+    """
+    return status["machines"][machine]["hostname"]
+
+
+def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
+    """
+    Given a hostname, get that machine's ID.
+
+    Arguments
+    =========
+    hostname (str)
+        The machine's hostname.
+
+    Returns
+    =======
+    machine (str)
+        The ID of the machine with the given hostname.
+    """
+    for machine in get_machines(status):
+        if status["machines"][machine]["hostname"] == hostname:
+            return machine
+
+
 def main(args: argparse.Namespace):
-    print(f"DEBUG: {args}")
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
@@ -487,8 +522,6 @@ def main(args: argparse.Namespace):
         if not args.file
         else read_local_juju_status_file(args.file)
     )
-
-    print(ip_to_machine(status, "10.101.23.58"))
 
 
 if __name__ == "__main__":
