@@ -1,5 +1,5 @@
 import pytest
-from jockey.jockey import parse_filter_string, FilterMode, ObjectType
+from jockey import parse_filter_string, FilterMode, ObjectType
 
 
 def test_filter_mode_retrieval():
