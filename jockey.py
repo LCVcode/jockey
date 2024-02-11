@@ -436,7 +436,47 @@ def machine_to_units(
                 yield subordinate_unit
 
 
+def machine_to_ips(
+    status: JujuStatus, machine: str
+) -> Generator[str, None, None]:
+    """
+    Given an machine id, each of its IP addresses as a geneator.
+
+    Arguments
+    =========
+    machine (str)
+        The ID of the machine to use.
+
+    Returns
+    =======
+    addresses (Generator[str])
+        The IP addresses of the machine.
+    """
+    for ip in status["machines"][machine]["ip-addresses"]:
+        yield ip
+
+
+def ip_to_machine(status: JujuStatus, ip: str) -> str:
+    """
+    Given an ip, get the ID of the machine that owns it.
+
+    Arguments
+    =========
+    address (str)
+        The IP address in question.
+
+    Returns
+    =======
+    machine ID (str)
+        ID of the machine owning the given IP.
+    """
+    for machine in status["machines"]:
+        if ip in status["machines"][machine]["ip-addresses"]:
+            return machine
+
+
 def main(args: argparse.Namespace):
+    print(f"DEBUG: {args}")
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
@@ -448,7 +488,7 @@ def main(args: argparse.Namespace):
         else read_local_juju_status_file(args.file)
     )
 
-    print(list(machine_to_units(status, "1")))
+    print(ip_to_machine(status, "10.101.23.58"))
 
 
 if __name__ == "__main__":
