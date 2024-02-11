@@ -13,10 +13,6 @@ Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju obj
 
 ## Example commands:
 
-### Get commands:
-
-Example `get` commands:
-
 `$ ./jockey.py units`
 `$ ./jockey.py units charm=ceph-osd`
 `$ ./jockey.py charms machine=1`
