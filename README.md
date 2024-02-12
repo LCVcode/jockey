@@ -1,17 +1,34 @@
 # Juju Jockey 
 
+## Overview
+
 Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.  It uses automatic caching of Juju's status in json format to enable faster parsing.  
 
-## Retrievable objects:
+Jockey relies on this model of Juju objects and how they are related:
+```
++-------+
+| Charm |
++-------+
+    |
++-------------+
+| Application |
++-------------+
+    |
++------+
+| Unit |
++------+
+    |
++---------+
+| Machine |------\
++---------+      |
+    |            |
++----------+   +----+
+| Hostname |   | IP |
++----------+   +----+
+```
+All filtering actions are performed by navigating this tree.
 
-* Units
-* Charms       (not implemented)
-* Applications (not implemented)
-* Machines     (not implemented)
-* Hostnames    (not implemented)
-* IPs          (not implemented)
-
-## Example commands:
+## Examples:
 
 `$ ./jockey.py units`
 `$ ./jockey.py units charm=ceph-osd`
