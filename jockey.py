@@ -6,6 +6,7 @@
 import argparse
 import json
 import re
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
 
@@ -21,9 +22,9 @@ JujuStatus = Dict[str, Any]
 
 class FilterMode(Enum):
     EQUALS = "="
-    NOT_EQUALS = "!="
     CONTAINS = "~"
-    NOT_CONTAINS = "!~"
+    NOT_EQUALS = "^="
+    NOT_CONTAINS = "^~"
 
 
 class ObjectType(Enum):
@@ -33,6 +34,13 @@ class ObjectType(Enum):
     MACHINE = ("machines", "machine", "m")
     IP = ("address", "addresses", "ips", "ip", "i")
     HOSTNAME = ("hostnames", "hostname", "host", "hosts", "h")
+
+
+@dataclass
+class JockeyFilter:
+    obj_type: ObjectType
+    mode: FilterMode
+    content: str
 
 
 def pretty_print_keys(data: JujuStatus, depth: int = 1) -> None:
@@ -70,7 +78,7 @@ def convert_object_abbreviation(abbrev: str) -> Optional[ObjectType]:
 
 def parse_filter_string(
     filter_str: str,
-) -> Tuple[str, FilterMode, str]:
+) -> JockeyFilter:
     """
     Parse a filter string down into its object type, filter mode, and content.
 
@@ -81,17 +89,11 @@ def parse_filter_string(
 
     Returns
     =======
-    object_type (str)
-        The object type of the filter.  May be "charm", "application", "unit",
-        "machine", "ip", or "hostname".
-    mode (FilterMode)
-        FilterMode of the filter.
-    content (str)
-        Content of the filter string, which may be any string that doesn't
-        include blacklisted characters.
+    jockey_filter (JockeyFilter)
+        The constructed JockeyFilter object
     """
 
-    filter_code_pattern = re.compile(r"[=!~]+")
+    filter_code_pattern = re.compile(r"[=^~]+")
 
     filter_codes = filter_code_pattern.findall(filter_str)
     assert len(filter_codes) == 1, "Incorrect number of filter codes detected."
@@ -114,7 +116,33 @@ def parse_filter_string(
         char in char_blacklist for char in content
     ), "Blacklisted characters detected in filter string content."
 
-    return object_type, filter_mode, content
+    return JockeyFilter(obj_type=object_type, mode=filter_mode, content=content)
+
+
+def check_filter_match(jockey_filter: JockeyFilter, value: str) -> bool:
+    """
+    Check if a value satisfied a Jockey filter.
+
+    Arguments
+    =========
+    jockey_filter (JockeyFilter)
+        A single Jockey filter
+    value (str)
+        A string to test against the filter
+
+    Returns
+    =======
+    is_match (bool)
+        True if value satisfies jockey_filter, else False
+    """
+    filter_map = {
+        FilterMode.EQUALS: lambda c, v: c == v,
+        FilterMode.NOT_EQUALS: lambda c, v: c != v,
+        FilterMode.CONTAINS: lambda c, v: c in v,
+        FilterMode.NOT_CONTAINS: lambda c, v: c not in v,
+    }
+    action = filter_map[jockey_filter.mode]
+    return action(jockey_filter.content, value)
 
 
 def is_app_principal(status: JujuStatus, app_name: str) -> bool:
@@ -411,6 +439,8 @@ def machine_to_units(
 
     Arguments
     =========
+    status (JujuStatus)
+        The current Juju status in json format.
     machine (str)
         The ID of the machine to use.
 
@@ -444,6 +474,8 @@ def machine_to_ips(
 
     Arguments
     =========
+    status (JujuStatus)
+        The current Juju status in json format.
     machine (str)
         The ID of the machine to use.
 
@@ -462,6 +494,8 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
 
     Arguments
     =========
+    status (JujuStatus)
+        The current Juju status in json format.
     address (str)
         The IP address in question.
 
@@ -481,6 +515,8 @@ def machine_to_hostname(status: JujuStatus, machine: str) -> str:
 
     Arguments
     =========
+    status (JujuStatus)
+        The current Juju status in json format.
     machine (str)
         The ID of the machine to use.
 
@@ -498,6 +534,8 @@ def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
 
     Arguments
     =========
+    status (JujuStatus)
+        The current Juju status in json format.
     hostname (str)
         The machine's hostname.
 
@@ -509,6 +547,58 @@ def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
     for machine in get_machines(status):
         if status["machines"][machine]["hostname"] == hostname:
             return machine
+
+
+def filter_units(
+    status: JujuStatus, filters: List[JockeyFilter]
+) -> Generator[str, None, None]:
+    """
+    Get all units from a Juju status that match a list of filters.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    filters (List[JockeyFilter])
+        A list of parsed filters, provided to the CLI.
+
+    Returns
+    =======
+    units (Generator[str])
+        All matching units, as a generator.
+    """
+
+    charm_filters = [f for f in filters if f.obj_type == ObjectType.CHARM]
+    app_filters = [f for f in filters if f.obj_type == ObjectType.APP]
+    unit_filters = [f for f in filters if f.obj_type == ObjectType.UNIT]
+    machine_filters = [f for f in filters if f.obj_type == ObjectType.MACHINE]
+    ip_filters = [f for f in filters if f.obj_type == ObjectType.IP]
+    hostname_filters = [f for f in filters if f.obj_type == ObjectType.HOSTNAME]
+
+    for unit in get_units(status):
+        # Check unit filters
+        if not all(
+            check_filter_match(u_filter, unit) for u_filter in unit_filters
+        ):
+            continue
+
+        if app_filters or charm_filters:
+            # Check application filters
+            app = unit_to_application(status, unit)
+            if not all(
+                check_filter_match(a_filter, app) for a_filter in app_filters
+            ):
+                continue
+
+            # Check charm filters
+            charm = application_to_charm(status, app)
+            if not all(
+                check_filter_match(c_filter, charm)
+                for c_filter in charm_filters
+            ):
+                continue
+
+        print(unit)
 
 
 def main(args: argparse.Namespace):
@@ -523,6 +613,20 @@ def main(args: argparse.Namespace):
         else read_local_juju_status_file(args.file)
     )
 
+    RETRIEVAL_MAP = {
+        ObjectType.CHARM: None,
+        ObjectType.APP: None,
+        ObjectType.UNIT: filter_units,
+        ObjectType.MACHINE: None,
+        ObjectType.IP: None,
+        ObjectType.HOSTNAME: None,
+    }
+
+    obj_type = convert_object_abbreviation(args.object)
+
+    action = RETRIEVAL_MAP[obj_type]
+    action(status, args.filters)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -535,8 +639,7 @@ if __name__ == "__main__":
     )
 
     # Add object type argument
-    objectparser = parser.add_mutually_exclusive_group(required=True)
-    objectparser.add_argument(
+    parser.add_argument(
         "object",
         choices=[
             abbrev for object_type in ObjectType for abbrev in object_type.value
