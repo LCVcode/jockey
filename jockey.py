@@ -3,6 +3,7 @@
 # match given filters.
 # Author: Connor Chamberlain
 
+import pdb
 import argparse
 import json
 import re
@@ -386,6 +387,7 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
     """
     Given a unit name, get its application name.
 
+
     Arguments
     =========
     status (JujuStatus)
@@ -402,6 +404,39 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
 
     if app_name in status["applications"]:
         return app_name
+
+
+def subordinate_unit_to_principal_unit(
+    status: JujuStatus, unit_name: str
+) -> str:
+    """
+    Given a unit name, get its principal unit.  If the given unit is principal,
+    it will be returned as-is.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+
+    Returns
+    =======
+    unit_name (str)
+        The name of the unit to check.
+    """
+    app = unit_to_application(status, unit_name)
+    app_data = status["applications"]
+
+    if is_app_principal(status, app):
+        return unit_name
+
+    for p_app in app_data[app]["subordinate-to"]:
+
+        if not is_app_principal(status, p_app):
+            continue
+
+        for p_unit in app_data[p_app]["units"]:
+            if unit_name in app_data[p_app]["units"][p_unit]["subordinates"]:
+                return p_unit
 
 
 def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
@@ -421,13 +456,10 @@ def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
     machine_id (str) [optional]
         The ID of the corresponding machine.
     """
-    app = unit_to_application(status, unit_name)
+    principal_unit_name = subordinate_unit_to_principal_unit(status, unit_name)
+    app = unit_to_application(status, principal_unit_name)
 
-    if not is_app_principal(status, app):
-        # TODO write a subordinate_to_principal function to get principal units
-        raise NotImplemented
-
-    return status["applications"][app]["units"][unit_name]["machine"]
+    return status["applications"][app]["units"][principal_unit_name]["machine"]
 
 
 def machine_to_units(
@@ -525,6 +557,11 @@ def machine_to_hostname(status: JujuStatus, machine: str) -> str:
     hostname (str)
         The machine's hostname.
     """
+    if "lxd" in machine:
+        physical_machine, _, container_id = machine.split("/")
+        return status["machines"][physical_machine]["containers"][machine][
+            "hostname"
+        ]
     return status["machines"][machine]["hostname"]
 
 
@@ -598,7 +635,37 @@ def filter_units(
             ):
                 continue
 
-        print(unit)
+        # If there aren't any machine, IP, or hostname filters, just yield
+        if not any((machine_filters, ip_filters, hostname_filters)):
+            yield unit
+            continue
+
+        # pdb.set_trace()
+        # Check machine filters
+        machine = unit_to_machine(status, unit)
+        if not all(
+            check_filter_match(m_filter, machine)
+            for m_filter in machine_filters
+        ):
+            continue
+
+        # Check hostname filters
+        hostname = machine_to_hostname(status, machine)
+        if not all(
+            check_filter_match(h_filter, hostname)
+            for h_filter in hostname_filters
+        ):
+            continue
+
+        # Check IP filters
+        ips = machine_to_ips(status, machine)
+        if not all(
+            any(check_filter_match(i_filter, ip) for ip in ips)
+            for i_filter in ip_filters
+        ):
+            continue
+
+        yield unit
 
 
 def main(args: argparse.Namespace):
@@ -625,7 +692,7 @@ def main(args: argparse.Namespace):
     obj_type = convert_object_abbreviation(args.object)
 
     action = RETRIEVAL_MAP[obj_type]
-    action(status, args.filters)
+    print(" ".join(action(status, args.filters)))
 
 
 if __name__ == "__main__":
