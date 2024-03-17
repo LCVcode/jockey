@@ -100,6 +100,7 @@ def parse_filter_string(
     assert len(filter_codes) == 1, "Incorrect number of filter codes detected."
 
     match = filter_code_pattern.search(filter_str)
+    assert match, "No filter code detected"
 
     object_type = convert_object_abbreviation(filter_str[: match.start()])
     assert object_type, "Invalid object type detected in filter string."
@@ -352,7 +353,7 @@ def application_to_charm(status: JujuStatus, app_name: str) -> Optional[str]:
     try:
         return status["applications"][app_name]["charm"]
     except KeyError:
-        return
+        return None
 
 
 def application_to_units(
@@ -405,6 +406,8 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
     if app_name in status["applications"]:
         return app_name
 
+    return None
+
 
 def subordinate_unit_to_principal_unit(
     status: JujuStatus, unit_name: str
@@ -424,6 +427,7 @@ def subordinate_unit_to_principal_unit(
         The name of the unit to check.
     """
     app = unit_to_application(status, unit_name)
+    assert app, f"No application found for unit {unit_name}"
     app_data = status["applications"]
 
     if is_app_principal(status, app):
@@ -437,6 +441,8 @@ def subordinate_unit_to_principal_unit(
         for p_unit in app_data[p_app]["units"]:
             if unit_name in app_data[p_app]["units"][p_unit]["subordinates"]:
                 return p_unit
+
+    raise Exception(f"No principal unit detected for unit {unit_name}")
 
 
 def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
@@ -486,6 +492,7 @@ def machine_to_units(
 
         # Skip subordinate units
         app = unit_to_application(status, unit)
+        assert app
         if not is_app_principal(status, app):
             continue
 
@@ -540,6 +547,8 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
         if ip in status["machines"][machine]["ip-addresses"]:
             return machine
 
+    raise Exception(f"No machine found with IP {ip}")
+
 
 def machine_to_hostname(status: JujuStatus, machine: str) -> str:
     """
@@ -585,6 +594,8 @@ def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
         if status["machines"][machine]["hostname"] == hostname:
             return machine
 
+    raise Exception(f"No machine found for hostname {hostname}")
+
 
 def filter_units(
     status: JujuStatus, filters: List[JockeyFilter]
@@ -622,6 +633,7 @@ def filter_units(
         if app_filters or charm_filters:
             # Check application filters
             app = unit_to_application(status, unit)
+            assert app
             if not all(
                 check_filter_match(a_filter, app) for a_filter in app_filters
             ):
@@ -629,6 +641,7 @@ def filter_units(
 
             # Check charm filters
             charm = application_to_charm(status, app)
+            assert charm
             if not all(
                 check_filter_match(c_filter, charm)
                 for c_filter in charm_filters
@@ -643,6 +656,7 @@ def filter_units(
         # pdb.set_trace()
         # Check machine filters
         machine = unit_to_machine(status, unit)
+        assert machine
         if not all(
             check_filter_match(m_filter, machine)
             for m_filter in machine_filters
@@ -651,6 +665,7 @@ def filter_units(
 
         # Check hostname filters
         hostname = machine_to_hostname(status, machine)
+        assert hostname
         if not all(
             check_filter_match(h_filter, hostname)
             for h_filter in hostname_filters
@@ -659,6 +674,7 @@ def filter_units(
 
         # Check IP filters
         ips = machine_to_ips(status, machine)
+        assert ips
         if not all(
             any(check_filter_match(i_filter, ip) for ip in ips)
             for i_filter in ip_filters
@@ -690,8 +706,10 @@ def main(args: argparse.Namespace):
     }
 
     obj_type = convert_object_abbreviation(args.object)
+    assert obj_type, f"'{args.object}' is not a valid object type."
 
     action = RETRIEVAL_MAP[obj_type]
+    assert action
     print(" ".join(action(status, args.filters)))
 
 
