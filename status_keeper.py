@@ -2,7 +2,8 @@ import datetime
 import json
 import os
 import subprocess
-from typing import Any, Dict
+from argparse import FileType
+from typing import Any, Dict, TextIO
 
 
 JOCKEY_PATH = os.path.expanduser("~/.jockey/")
@@ -68,11 +69,12 @@ def retrieve_juju_cache() -> Dict[str, Any]:
     return status
 
 
-def read_local_juju_status_file(filepath: str) -> Dict[str, Any]:
+def read_local_juju_status_file(file: TextIO) -> Dict[str, Any]:
     """
     Import Juju status from a local JSON file.
     """
-    filepath = os.path.abspath(filepath.name)
+    print("DEBUG:", type(file))
+    filepath = os.path.abspath(file.name)
     with open(filepath, "r") as file:
         status = json.loads(file.read())
 
