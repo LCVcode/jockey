@@ -73,7 +73,6 @@ def read_local_juju_status_file(file: TextIO) -> Dict[str, Any]:
     """
     Import Juju status from a local JSON file.
     """
-    print("DEBUG:", type(file))
     filepath = os.path.abspath(file.name)
     with open(filepath, "r") as file:
         status = json.loads(file.read())
