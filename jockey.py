@@ -256,7 +256,7 @@ def get_units(status: JujuStatus) -> Generator[str, None, None]:
 
 def get_machines(status: JujuStatus) -> Generator[str, None, None]:
     """
-    Get all machines in the Juju model by index.
+    Get all machines in the Juju model, including containers.
 
     Arguments
     =========
@@ -266,10 +266,16 @@ def get_machines(status: JujuStatus) -> Generator[str, None, None]:
     Returns
     =======
     machine_ids (Generator[str])
-        All machine indices, in no particular order, as a generator.
+        All machines, in no particular order, as a generator.
     """
     for id in status["machines"].keys():
         yield id
+
+        if "containers" not in status["machines"][id]:
+            continue
+
+        for container in status["machines"][id]["containers"]:
+            yield container
 
 
 def get_hostnames(status: JujuStatus) -> Generator[str, None, None]:
