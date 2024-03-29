@@ -241,6 +241,10 @@ def get_units(status: JujuStatus) -> Generator[str, None, None]:
         if not is_app_principal(status, app):
             continue
 
+        # Skip applications that have no deployed units
+        if "units" not in status["applications"][app]:
+            continue
+
         for unit_name, data in status["applications"][app]["units"].items():
             # Generate principal unit
             yield unit_name
