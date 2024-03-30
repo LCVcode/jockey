@@ -9,7 +9,16 @@ import json
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, NamedTuple, Generator, Optional, List, Tuple
+from typing import (
+    Any,
+    Dict,
+    NamedTuple,
+    Generator,
+    Optional,
+    List,
+    Tuple,
+    Iterable,
+)
 
 from status_keeper import (
     retrieve_juju_cache,
@@ -28,6 +37,18 @@ class FilterMode(Enum):
     NOT_CONTAINS = "^~"
 
 
+POSITIVE_MODES = (
+    FilterMode.EQUALS,
+    FilterMode.CONTAINS,
+)
+
+
+NEGATIVE_MODES = (
+    FilterMode.NOT_EQUALS,
+    FilterMode.NOT_CONTAINS,
+)
+
+
 class ObjectType(Enum):
     CHARM = ("charms", "charm", "c")
     APP = ("app", "apps", "application", "applications", "a")
@@ -44,16 +65,22 @@ class JockeyFilter:
     content: str
 
 
-def pretty_print_keys(data: JujuStatus, depth: int = 1) -> None:
-    """Print a dictionary's keys in a heirarchy."""
-    if depth < 1:
-        return
+def positive_filters(
+    filters: Iterable[JockeyFilter],
+) -> Generator[JockeyFilter, None, None]:
+    """Extract the positive filters from a group of filters."""
+    for f in filters:
+        if f.mode in POSITIVE_MODES:
+            yield f
 
-    for key, value in data.items():
-        print(" |" * depth + key)
 
-        if isinstance(value, dict):
-            pretty_print_keys(data[key], depth=depth - 1)
+def negative_filters(
+    filters: Iterable[JockeyFilter],
+) -> Generator[JockeyFilter, None, None]:
+    """Extract the negative filters from a group of filters."""
+    for f in filters:
+        if f.mode in NEGATIVE_MODES:
+            yield f
 
 
 def convert_object_abbreviation(abbrev: str) -> Optional[ObjectType]:
@@ -121,6 +148,14 @@ def parse_filter_string(
     return JockeyFilter(obj_type=object_type, mode=filter_mode, content=content)
 
 
+FILTER_ACTION_MAP = {
+    FilterMode.EQUALS: lambda c, v: c == v,
+    FilterMode.NOT_EQUALS: lambda c, v: c != v,
+    FilterMode.CONTAINS: lambda c, v: c in v,
+    FilterMode.NOT_CONTAINS: lambda c, v: c not in v,
+}
+
+
 def check_filter_match(jockey_filter: JockeyFilter, value: str) -> bool:
     """
     Check if a value satisfied a Jockey filter.
@@ -137,14 +172,47 @@ def check_filter_match(jockey_filter: JockeyFilter, value: str) -> bool:
     is_match (bool)
         True if value satisfies jockey_filter, else False
     """
-    filter_map = {
-        FilterMode.EQUALS: lambda c, v: c == v,
-        FilterMode.NOT_EQUALS: lambda c, v: c != v,
-        FilterMode.CONTAINS: lambda c, v: c in v,
-        FilterMode.NOT_CONTAINS: lambda c, v: c not in v,
-    }
-    action = filter_map[jockey_filter.mode]
+    action = FILTER_ACTION_MAP[jockey_filter.mode]
     return action(jockey_filter.content, value)
+
+
+def check_filter_batch_match(
+    filter_list: Iterable[JockeyFilter], batch: Iterable[str]
+) -> bool:
+    """
+    Check if a batch of Juju objects (as strings) satisfies a set of filters.
+
+    Just like check_filter_match, this function ignores the Juju object type
+    and simply performs the relevant string comparisons.
+
+    Arguments
+    =========
+    filter_list (Iterable[JockeyFilter])
+        A set of Jockey filters to be tested against.
+    batch (Iterable[str])
+        A set of object names to be tested.
+
+    Returns
+    =======
+    match_success (bool)
+        True if all of batch pass testings against filter_list, else False.
+    """
+    batch = tuple(batch)
+    filter_list = tuple(filter_list)
+    pos_filters = tuple(positive_filters(filter_list))
+    neg_filters = tuple(negative_filters(filter_list))
+
+    # First, check if any negative filters disqualify the batch
+    for filt in neg_filters:
+        if not all(check_filter_match(filt, item) for item in batch):
+            return False
+
+    # Finally, check that all positive filters are satisfied by batch
+    for filt in pos_filters:
+        if not any(check_filter_match(filt, item) for item in batch):
+            return False
+
+    return True
 
 
 def is_app_principal(status: JujuStatus, app_name: str) -> bool:
@@ -509,6 +577,9 @@ def machine_to_units(
         if unit_to_machine(status, unit) == machine:
             yield unit
 
+            if "subordinates" not in status["applications"][app]["units"][unit]:
+                continue
+
             for subordinate_unit in status["applications"][app]["units"][unit][
                 "subordinates"
             ]:
@@ -533,8 +604,13 @@ def machine_to_ips(
     addresses (Generator[str])
         The IP addresses of the machine.
     """
-    for ip in status["machines"][machine]["ip-addresses"]:
-        yield ip
+    if "lxd" in machine.lower():
+        base_machine = status["machines"][machine.split("/")[0]]
+        for ip in base_machine["containers"][machine]["ip-addresses"]:
+            yield ip
+    else:
+        for ip in status["machines"][machine]["ip-addresses"]:
+            yield ip
 
 
 def ip_to_machine(status: JujuStatus, ip: str) -> str:
@@ -663,7 +739,6 @@ def filter_units(
             yield unit
             continue
 
-        # pdb.set_trace()
         # Check machine filters
         machine = unit_to_machine(status, unit)
         assert machine
@@ -694,6 +769,74 @@ def filter_units(
         yield unit
 
 
+def filter_machines(
+    status: JujuStatus, filters: List[JockeyFilter]
+) -> Generator[str, None, None]:
+    """
+    Get all machines from a Juju status that match a list of filters.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    filters (List[JockeyFilter])
+        A list of parsed filters, provided to the CLI.
+
+    Returns
+    =======
+    machines (Generator[str])
+        All matching machines, as a generator.
+    """
+
+    machine_filters = [f for f in filters if f.obj_type == ObjectType.MACHINE]
+    hostname_filters = [f for f in filters if f.obj_type == ObjectType.HOSTNAME]
+    ip_filters = [f for f in filters if f.obj_type == ObjectType.IP]
+
+    unit_filters = [f for f in filters if f.obj_type == ObjectType.UNIT]
+    app_filters = [f for f in filters if f.obj_type == ObjectType.APP]
+    charm_filters = [f for f in filters if f.obj_type == ObjectType.CHARM]
+
+    for machine in get_machines(status):
+        # Check machine filters
+        if not all(
+            check_filter_match(m_filter, machine)
+            for m_filter in machine_filters
+        ):
+            continue
+
+        # Check hostname filters
+        hostname = machine_to_hostname(status, machine)
+        assert hostname
+        if not all(
+            check_filter_match(h_filter, hostname)
+            for h_filter in hostname_filters
+        ):
+            continue
+
+        # Check IP filters
+        ips = machine_to_ips(status, machine)
+        assert ips
+        if not check_filter_batch_match(ip_filters, ips):
+            continue
+
+        # Check unit filters
+        units = tuple(machine_to_units(status, machine))
+        if not check_filter_batch_match(unit_filters, units):
+            continue
+
+        # Check application filters
+        apps = tuple(unit_to_application(status, unit) for unit in units)
+        if not check_filter_batch_match(app_filters, apps):
+            continue
+
+        # Check charm filters
+        charms = tuple(application_to_charm(status, app) for app in apps)
+        if not check_filter_batch_match(charm_filters, charms):
+            continue
+
+        yield machine
+
+
 def main(args: argparse.Namespace):
     # Perform any requested cache refresh
     if args.refresh:
@@ -710,7 +853,7 @@ def main(args: argparse.Namespace):
         ObjectType.CHARM: None,
         ObjectType.APP: None,
         ObjectType.UNIT: filter_units,
-        ObjectType.MACHINE: None,
+        ObjectType.MACHINE: filter_machines,
         ObjectType.IP: None,
         ObjectType.HOSTNAME: None,
     }
@@ -719,7 +862,7 @@ def main(args: argparse.Namespace):
     assert obj_type, f"'{args.object}' is not a valid object type."
 
     action = RETRIEVAL_MAP[obj_type]
-    assert action
+    assert action, f"Parsing {obj_type} is not implemented."
     print(" ".join(action(status, args.filters)))
 
 
