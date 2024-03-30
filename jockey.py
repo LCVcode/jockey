@@ -826,12 +826,13 @@ def filter_machines(
 
         # Check application filters
         apps = tuple(unit_to_application(status, unit) for unit in units)
-        if not check_filter_batch_match(app_filters, apps):
+        assert all(apps)
+        if not check_filter_batch_match(app_filters, apps):  # type: ignore
             continue
 
         # Check charm filters
-        charms = tuple(application_to_charm(status, app) for app in apps)
-        if not check_filter_batch_match(charm_filters, charms):
+        charms = tuple(application_to_charm(status, app) for app in apps)  # type: ignore
+        if not check_filter_batch_match(charm_filters, charms):  # type: ignore
             continue
 
         yield machine
@@ -868,7 +869,10 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Jockey - All your Juju objects at your fingertips."
+        description=(
+            "Jockey - A Juju query language to put all your"
+            "Juju objects at your fingertips."
+        )
     )
 
     # Add cache refresh flag
@@ -878,12 +882,12 @@ if __name__ == "__main__":
 
     # Add object type argument
     parser.add_argument(
-        "object",
+        "object type",
         choices=[
             abbrev for object_type in ObjectType for abbrev in object_type.value
         ],
         nargs="?",
-        help="Choose an object type to seek",
+        help="Choose an object type to query",
     )
 
     # Add filters as positional arguments
