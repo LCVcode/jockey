@@ -870,7 +870,7 @@ def main(args: argparse.Namespace):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=(
-            "Jockey - A Juju query language to put all your"
+            "Jockey - A Juju query language to put all your "
             "Juju objects at your fingertips."
         )
     )
@@ -887,14 +887,14 @@ if __name__ == "__main__":
             abbrev for object_type in ObjectType for abbrev in object_type.value
         ],
         nargs="?",
-        help="Choose an object type to query",
+        help="Choose an object type to query.",
     )
 
     # Add filters as positional arguments
     filters_help = (
-        "Specify filters for the query. Each filter should be in the format"
-        "`key operator value`. Supported operators: = != ~."
-        "For example:"
+        "Specify filters for your query. Each filter must be formatted as: "
+        "`key operator value`. Supported operators: = ^= ~ \n"
+        "For example: \n"
         "  app=nova-compute hostname~ubun"
     )
     parser.add_argument(
