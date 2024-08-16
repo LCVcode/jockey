@@ -51,11 +51,84 @@ NEGATIVE_MODES = (
 
 class ObjectType(Enum):
     CHARM = ("charms", "charm", "c")
-    APP = ("app", "apps", "application", "applications", "a")
+    APP = ("applications", "app", "apps", "application", "a")
     UNIT = ("units", "unit", "u")
     MACHINE = ("machines", "machine", "m")
-    IP = ("address", "addresses", "ips", "ip", "i")
+    IP = ("ips", "address", "addresses", "ip", "i")
     HOSTNAME = ("hostnames", "hostname", "host", "hosts", "h")
+
+
+def list_abbreviations() -> str:
+    pad = 15
+
+    header = "OBJECT TYPE".ljust(pad, " ") + "SHORT NAMES"
+    lines = [
+        obj_type.value[0].ljust(pad, " ") + ", ".join(obj_type.value[1:])
+        for obj_type in ObjectType
+    ]
+    return "\n".join([header, *lines])
+
+
+INFO_MESSAGE = f"""
++----+
+|NOTE|
++----+
+Jockey is a work-in-progress currently only supports querying:
+    units
+    machines
+
+
++-------+
+|FILTERS|
++-------+
+Filters have a three-part syntax:
+    <object type><filter code><content>
+
+<object type> can be any supported Juju object types or their equivalent
+abbreviations (see "SHORT NAMES", below).  These values are identical to the
+`object` argument in the Jockey CLI.
+
+<filter code> specifies how objects should be filtered relative to <content>
+There are four possible values for <filter code>:
+    {FilterMode.EQUALS.value.ljust(3)}: matches
+    {FilterMode.NOT_EQUALS.value.ljust(3)}: does not match
+    {FilterMode.CONTAINS.value.ljust(3)}: contains
+    {FilterMode.NOT_CONTAINS.value.ljust(3)}: does not contain
+Exactly one <filter code> must be given per filter.
+
+<content> is a given string that will be used to filter Juju object names.
+
+
++-----------+
+|SHORT NAMES|
++-----------+
+Jockey object name abbreviations:
+
+{list_abbreviations()}
+
+
++---------------+
+|EXAMPLE QUERIES|
++---------------+
+ Get all units:
+     jockey units
+
+ Get all nova-compute units:
+     jockey units application=nova-compute
+
+ Get the hw-health unit on a machine with a partial hostname "e01":
+    jockey u a=hw-health host~e01
+
+ Get all non-lxd machines:
+     jockey m m^~lxd
+
+
++-------------------+
+|OPERATIONS EXAMPLES|
++-------------------+
+ Run a 'show-sel' action a machine with a partial host name 'ts1363co':
+     juju run-action --wait $(jockey u a~hw-hea m~ts1363co) show-sel
+"""
 
 
 @dataclass
@@ -826,18 +899,24 @@ def filter_machines(
 
         # Check application filters
         apps = tuple(unit_to_application(status, unit) for unit in units)
-        if not check_filter_batch_match(app_filters, apps):
+        assert all(apps)
+        if not check_filter_batch_match(app_filters, apps):  # type: ignore
             continue
 
         # Check charm filters
-        charms = tuple(application_to_charm(status, app) for app in apps)
-        if not check_filter_batch_match(charm_filters, charms):
+        charms = tuple(application_to_charm(status, app) for app in apps)  # type: ignore
+        if not check_filter_batch_match(charm_filters, charms):  # type: ignore
             continue
 
         yield machine
 
 
 def main(args: argparse.Namespace):
+    # Check if 'help' was requested
+    if args.object == "info":
+        print(INFO_MESSAGE)
+        return
+
     # Perform any requested cache refresh
     if args.refresh:
         cache_juju_status()
@@ -868,7 +947,10 @@ def main(args: argparse.Namespace):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Jockey - All your Juju objects at your fingertips."
+        description=(
+            "Jockey - A Juju query language to put all your "
+            "Juju objects at your fingertips."
+        )
     )
 
     # Add cache refresh flag
@@ -879,22 +961,15 @@ if __name__ == "__main__":
     # Add object type argument
     parser.add_argument(
         "object",
-        choices=[
-            abbrev for object_type in ObjectType for abbrev in object_type.value
-        ],
-        nargs="?",
-        help="Choose an object type to seek",
+        help=f"Choose an object type to query or 'info'",
     )
 
     # Add filters as positional arguments
-    filters_help = (
-        "Specify filters for the query. Each filter should be in the format"
-        "`key operator value`. Supported operators: = != ~."
-        "For example:"
-        "  app=nova-compute hostname~ubun"
-    )
     parser.add_argument(
-        "filters", type=parse_filter_string, nargs="*", help=filters_help
+        "filters",
+        type=parse_filter_string,
+        nargs="*",
+        help="Specify filters for your query.",
     )
 
     # Optional import from a json file
