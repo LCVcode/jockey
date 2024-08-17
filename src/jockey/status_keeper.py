@@ -3,9 +3,9 @@ import json
 import os
 import subprocess
 from typing import Any, Dict, TextIO
-from xdgenvpy import XDGPackage
+from xdgenvpy import XDGPedanticPackage
 
-JOCKEY_XDG = XDGPackage("jockey")
+JOCKEY_XDG = XDGPedanticPackage("jockey")
 CACHE_PATH = os.path.join(JOCKEY_XDG.XDG_CACHE_HOME, "cache.json")
 CONFIG_PATH = os.path.join(JOCKEY_XDG.XDG_CONFIG_HOME, "config.json")
 
