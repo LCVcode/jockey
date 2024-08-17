@@ -6,12 +6,15 @@ Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju obj
 
 Jockey relies on this model of Juju objects and how they are related:
 ```mermaid
-flowchart
-    C[Charm] --> A(Application)
+---
+title: Juju object relationships
+---
+flowchart LR
+    C([Charm]) --> A[Application]
     A -->|Instances of| U[Unit]
     U -->|Running on| M[Machine]
-    M -->|Metadata| M_I[IP]
-    M -->|Metadata| M_H[Hostname]
+    M -->|Metadata| M_I(IP)
+    M -->|Metadata| M_H(Hostname)
 ```
 
 All filtering actions are performed by navigating this tree.
