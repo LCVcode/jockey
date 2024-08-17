@@ -21,6 +21,16 @@ jobs:
         run: exit 1
         if: "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')"
 
+  cd:
+    name: CD
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: "always()"
+    steps:
+      - name: Failed
+        run: exit 1
+        if: "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')"
+
   lock:
     name: Check poetry.lock
     runs-on: ubuntu-latest
@@ -178,3 +188,45 @@ jobs:
         verbose: true
         fail_ci_if_error: false
       if: steps.has_codecov.outputs.result != 0
+
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: [ci]
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python toolchain
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root --all-extras --with dev
+      - name: Build
+        run: poetry build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: distfiles
+          path: dist/
+          if-no-files-found: 'error'
