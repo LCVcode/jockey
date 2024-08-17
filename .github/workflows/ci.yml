@@ -1,19 +1,177 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: true
 
 jobs:
-  test:
+  ci:
+    name: CI
+    needs: [lock, black, flake8, isort, test]
+    runs-on: ubuntu-latest
+    if: "always()"
+    steps:
+      - name: Failed
+        run: exit 1
+        if: "contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')"
+
+  lock:
+    name: Check poetry.lock
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python toolchain
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root --all-extras --with dev
+      - name: "Is poetry.lock up to date?"
+        run: poetry lock --check
+
+  black:
+    name: Lint with black
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python toolchain
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root --all-extras --with dev
+      - name: Run black
+        run: poetry run black ./src --check
+
+  flake8:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python toolchain
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root --all-extras --with dev
+      - name: Run flake8
+        run: poetry run flake8 ./src
+
+  isort:
+    name: Lint with isort
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Python toolchain
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.4.1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached environment
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root --all-extras --with dev
+      - name: Run isort
+        run: poetry run isort ./src --check
+
+  test:
+    name: Test on ${{ matrix.os }} with Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: [ '3.9', '3.10', '3.11' ]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install Python toolchain
       uses: actions/setup-python@v5
       with:
-        python-version: '3.x'
+        python-version: ${{ matrix.python-version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: 1.8.3
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    - name: Load cached environment
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
     - name: Install dependencies
-      run: pip install pytest black 
-    - name: Test with pytest
-      run: pytest 
-    - name: Lint code
-      run: black --check --line-length 80 .
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root --all-extras --with dev
+    - name: Run tests and collect coverage
+      run: poetry run pytest --cov=./src --cov-report=xml
+    - name: Determine if CODECOV_TOKEN is available
+      id: has_codecov
+      run: echo 'result=${{ secrets.CODECOV_TOKEN }}' >> $GITHUB_OUTPUT
+    - name: Upload to codecov.io
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+        fail_ci_if_error: false
+      if: steps.has_codecov.outputs.result != 0
