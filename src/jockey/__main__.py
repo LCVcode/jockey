@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
+from argparse import ArgumentParser, FileType, Namespace
 import sys
-from argparse import Namespace, ArgumentParser, FileType
 from typing import Optional, Sequence
 
 from jockey.__init__ import __version__ as version
-from jockey.core import ObjectType, filter_units, filter_machines, convert_object_abbreviation, list_abbreviations, \
-    FilterMode, parse_filter_string
+from jockey.core import (
+    FilterMode,
+    ObjectType,
+    convert_object_abbreviation,
+    filter_machines,
+    filter_units,
+    list_abbreviations,
+    parse_filter_string,
+)
+from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
 
-from jockey.status_keeper import cache_juju_status, retrieve_juju_cache, read_local_juju_status_file
 
 INFO_MESSAGE = f"""
 +----+
@@ -81,7 +88,7 @@ def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
     # Add object type argument
     parser.add_argument(
         "object",
-        help=f"Choose an object type to query or 'info'",
+        help="Choose an object type to query or 'info'",
     )
 
     # Add filters as positional arguments

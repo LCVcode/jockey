@@ -48,8 +48,6 @@ def list_abbreviations() -> str:
     return "\n".join([header, *lines])
 
 
-
-
 @dataclass
 class JockeyFilter:
     obj_type: ObjectType
@@ -433,7 +431,7 @@ def application_to_units(status: JujuStatus, app_name: str) -> Generator[str, No
     units (Generator[str])
         All units of the given application.
     """
-    for application, data in status["applications"].items():
+    for application, _ in status["applications"].items():
 
         if application != app_name:
             continue

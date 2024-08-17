@@ -88,6 +88,7 @@ disable-noqa = false
 enable-extensions = [
     'G', # flake8-logging-format
 ]
+extend-ignore = ["E203"]
 extend-exclude = [
     '.github',
     '.Python',
