@@ -339,6 +339,17 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "poetry-pyinstaller-plugin"
+version = "1.1.15"
+description = "Poetry plugin to build and/or bundle executable binaries with PyInstaller"
+optional = false
+python-versions = "<3.13,>=3.8"
+files = [
+    {file = "poetry_pyinstaller_plugin-1.1.15-py3-none-any.whl", hash = "sha256:8e28504a1b6e1485baac63fc571a69b4ef0f9c399ba7bdfdf768774c7d117dac"},
+    {file = "poetry_pyinstaller_plugin-1.1.15.tar.gz", hash = "sha256:d934b604e99ed6773046b3bc617703bc3ffb6f66a1e4006916498985a90ad86b"},
+]
+
+[[package]]
 name = "pycodestyle"
 version = "2.11.1"
 description = "Python style guide checker"
@@ -424,5 +435,5 @@ files = [
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.9"
-content-hash = "28ad30324f0723a20e9139cd029badd5295c9f574deab744191acb05a4840929"
+python-versions = ">=3.9,<3.13"
+content-hash = "65c48f40e8dfb55abb8ad7aac092274a0826aaf9b2ef97f4658f2e68b3834bc9"

@@ -14,10 +14,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.9,<3.13"
 click = "^8.1.7"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
 black = "^24.3.0"
 mypy = "^0.991"
@@ -25,6 +25,7 @@ flake8 = "^6.0.0"
 pytest = "^8.0.0"
 coverage = "^7.0.0"
 pytest-cov = "^5.0.0"
+poetry-pyinstaller-plugin = "^1.1.15"
 
 [tool.coverage.run]
 branch = true
@@ -91,6 +92,15 @@ extend-exclude = [
     'sdist',
     'wheels',
 ]
+
+[tool.poetry-pyinstaller-plugin]
+version = "6.7.0"
+
+# disable compression
+disable-upx = true
+
+[tool.poetry-pyinstaller-plugin.scripts]
+jockey = { source = "./jockey.py", type = "onefile", bundle = false }
 
 [build-system]
 requires = ["poetry-core"]
