@@ -5,27 +5,15 @@
 Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.  It uses automatic caching of Juju's status in json format to enable faster parsing.  
 
 Jockey relies on this model of Juju objects and how they are related:
+```mermaid
+flowchart
+    C[Charm] --> A(Application)
+    A -->|Instances of| U[Unit]
+    U -->|Running on| M[Machine]
+    M -->|Metadata| M_I[IP]
+    M -->|Metadata| M_H[Hostname]
 ```
-+-------+
-| Charm |
-+-------+
-    |
-+-------------+
-| Application |
-+-------------+
-    |
-+------+
-| Unit |
-+------+
-    |
-+---------+
-| Machine |------\
-+---------+      |
-    |            |
-+----------+   +----+
-| Hostname |   | IP |
-+----------+   +----+
-```
+
 All filtering actions are performed by navigating this tree.
 
 ## Command Anatomy
