@@ -1,4 +1,4 @@
-from src.jockey import FilterMode, JockeyFilter, ObjectType, check_filter_match, parse_filter_string
+from jockey.core import FilterMode, JockeyFilter, ObjectType, check_filter_match, parse_filter_string
 import pytest
 
 

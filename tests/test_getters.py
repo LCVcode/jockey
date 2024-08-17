@@ -1,6 +1,6 @@
 import json
 
-from src.jockey import get_machines, get_units
+from jockey.core import get_machines, get_units
 import pytest
 
 
