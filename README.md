@@ -99,11 +99,11 @@ poetry run pytest -s
 ```
 
 ## Examples:
-`$ ./jockey.py units`
-`$ ./jockey.py units charm=ceph-osd`
-`$ ./jockey.py charms machine=1`
-`$ ./jockey.py app charm=charm-nrpe machine=4/lxd/2`
-`$ ./jockey.py units app^=nova principal=true hostname~blrt`
+- `./jockey.py units`
+- `./jockey.py units charm=ceph-osd`
+- `./jockey.py charms machine=1`
+- `./jockey.py app charm=charm-nrpe machine=4/lxd/2`
+- `./jockey.py units app^=nova principal=true hostname~blrt`
 
 ## Wishlist:
 
