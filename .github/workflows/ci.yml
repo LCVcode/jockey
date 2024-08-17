@@ -11,8 +11,9 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
+    - name: Install dependencies
+      run: pip install pytest black 
     - name: Test with pytest
-      run: |
-        pip install pytest black 
-        pytest 
-        black --check --line-length 79 .
+      run: pytest 
+    - name: Lint code
+      run: black --check --line-length 80 .
