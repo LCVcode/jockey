@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import subprocess
-from argparse import FileType
 from typing import Any, Dict, TextIO
 
 

@@ -1,32 +1,14 @@
+from src.jockey import FilterMode, JockeyFilter, ObjectType, check_filter_match, parse_filter_string
 import pytest
-from jockey import (
-    parse_filter_string,
-    FilterMode,
-    ObjectType,
-    JockeyFilter,
-    check_filter_match,
-)
 
 
 def test_filter_mode_retrieval():
     """Test that FilterModes are retrieved correctly."""
 
-    assert (
-        next(mode for mode in FilterMode if mode.value == "~")
-        == FilterMode.CONTAINS
-    )
-    assert (
-        next(mode for mode in FilterMode if mode.value == "^~")
-        == FilterMode.NOT_CONTAINS
-    )
-    assert (
-        next(mode for mode in FilterMode if mode.value == "=")
-        == FilterMode.EQUALS
-    )
-    assert (
-        next(mode for mode in FilterMode if mode.value == "^=")
-        == FilterMode.NOT_EQUALS
-    )
+    assert next(mode for mode in FilterMode if mode.value == "~") == FilterMode.CONTAINS
+    assert next(mode for mode in FilterMode if mode.value == "^~") == FilterMode.NOT_CONTAINS
+    assert next(mode for mode in FilterMode if mode.value == "=") == FilterMode.EQUALS
+    assert next(mode for mode in FilterMode if mode.value == "^=") == FilterMode.NOT_EQUALS
 
 
 def test_valid_filters():
@@ -117,9 +99,7 @@ def test_empty_content():
 
 @pytest.fixture
 def unit_equals_filter():
-    return JockeyFilter(
-        obj_type=ObjectType.UNIT, mode=FilterMode.EQUALS, content="test-content"
-    )
+    return JockeyFilter(obj_type=ObjectType.UNIT, mode=FilterMode.EQUALS, content="test-content")
 
 
 @pytest.fixture

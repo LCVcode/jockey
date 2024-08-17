@@ -1,6 +1,7 @@
 import json
+
+from src.jockey import get_machines, get_units
 import pytest
-from jockey import get_machines, get_units
 
 
 @pytest.fixture
