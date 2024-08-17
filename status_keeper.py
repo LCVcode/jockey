@@ -2,13 +2,12 @@ import datetime
 import json
 import os
 import subprocess
-from argparse import FileType
 from typing import Any, Dict, TextIO
+from xdgenvpy import XDGPackage
 
-
-JOCKEY_PATH = os.path.expanduser("~/.jockey/")
-CACHE_PATH = f"{JOCKEY_PATH}cache.json"
-CONFIG_PATH = f"{JOCKEY_PATH}jockey.conf"
+JOCKEY_XDG = XDGPackage("jockey")
+CACHE_PATH = os.path.join(JOCKEY_XDG.XDG_CACHE_HOME, "cache.json")
+CONFIG_PATH = os.path.join(JOCKEY_XDG.XDG_CONFIG_HOME, "config.json")
 
 
 def get_current_juju_status_json() -> str:
