@@ -115,6 +115,9 @@ version = "6.7.0"
 # disable compression
 disable-upx = true
 
+# ran after all builds are done
+post-build = "hooks.pyinstaller:post_build"
+
 [tool.poetry-pyinstaller-plugin.scripts]
 jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
 
