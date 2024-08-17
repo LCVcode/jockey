@@ -3,6 +3,9 @@
 *.json
 *.sh
 
+### Documentation
+docs/
+
 ### JetBrains
 # Configuration
 .idea
