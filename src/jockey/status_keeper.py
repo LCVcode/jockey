@@ -29,9 +29,6 @@ def cache_juju_status() -> None:
     Cache the current Juju status in json format.  Creates the jockey directory
     if it does not already exist.
     """
-    if not os.path.exists(JOCKEY_PATH):
-        os.makedirs(JOCKEY_PATH)
-
     status = get_current_juju_status_json()
     with open(CACHE_PATH, "w") as file:
         file.write(status)
