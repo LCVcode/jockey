@@ -21,7 +21,6 @@ def get_current_juju_status_json() -> str:
         return result.stdout
     else:
         raise Exception("Juju status command failed.")
-    return ""
 
 
 def cache_juju_status() -> None:
