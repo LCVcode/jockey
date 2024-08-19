@@ -99,11 +99,49 @@ poetry run pytest -s
 ```
 
 ## Examples:
-- `jockey units`
-- `jockey units charm=ceph-osd`
-- `jockey charms machine=1`
-- `jockey app charm=charm-nrpe machine=4/lxd/2`
-- `jockey units app^=nova principal=true hostname~blrt`
+
+<!-- jockey units -->
+<details>
+<summary><code>jockey units</code></summary>
+<pre>
+ceph-osd/0 telegraf-ceph/2 ceph-osd/1 telegraf-ceph/1 ceph-osd/2 telegraf-ceph/0 mysql-innodb-cluster/0 telegraf-mysql/0
+</pre>
+</details>
+
+<!-- jockey units charm=ceph-osd -->
+<details>
+<summary><code>jockey units charm=ceph-osd</code></summary>
+<pre>
+ceph-osd/0 ceph-osd/1 ceph-osd/2
+</pre>
+</details>
+
+<!-- jockey charms machine=1 -->
+<details>
+<summary><code>jockey charms machine=1</code></summary>
+
+> **Note**
+> Sorry, the `machine` filter is not yet implemented; stay tuned!
+
+</details>
+
+<!-- jockey app charm=charm-nrpe machine=4/lxd/2 -->
+<details>
+<summary><code>jockey app charm=charm-nrpe machine=4/lxd/2</code></summary>
+
+> **Note**
+> Sorry, the `app` filter is not yet implemented; stay tuned!
+
+</details>
+
+<!-- jockey units app^=nova principal=true hostname~blrt -->
+<details>
+<summary><code>jockey units app^=nova principal=true hostname~blrt</code></summary>
+
+> **Note**
+> Sorry, the `app` filter is not yet implemented; stay tuned!
+
+</details>
 
 ## Wishlist:
 
