@@ -7,7 +7,7 @@ description: |
   It uses automatic caching of Juju's status in json format to enable faster parsing.
 license: MIT
 grade: stable
-confinement: strict
+confinement: classic
 
 architectures: [amd64, i386, arm64, armhf, ppc64el]
 
@@ -22,15 +22,10 @@ parts:
     plugin: python
     source: .
     source-type: local
-    python-packages:
-      - dephell[full]
     build-snaps:
       - jq
       - remarshal
     build-environment:
-      - SNAPCRAFT_PYTHON_INTERPRETER: python3.9
+      - SNAPCRAFT_PYTHON_INTERPRETER: python3.10
     override-build: |
-      export PATH="${PATH}:${HOME}/.local/bin"
-      python3 -m dephell deps convert --from-path pyproject.toml --from-format poetry --to-path setup.py --to-format setuppy
-      snapcraftctl build
       snapcraftctl set-version "$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
