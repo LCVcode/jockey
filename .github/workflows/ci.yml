@@ -243,7 +243,7 @@ jobs:
         id: snapcraft
       - name: Upload logs on failure
         if: failure()
-        uses: action/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: snapcraft-logs
           path: ~/.local/state/snapcraft/log/*.log
