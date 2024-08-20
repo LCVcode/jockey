@@ -18,7 +18,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-jockey = "jockey.__main__:main"
+juju-jockey = "jockey.__main__:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
@@ -120,7 +120,7 @@ disable-upx = true
 post-build = "hooks.pyinstaller:post_build"
 
 [tool.poetry-pyinstaller-plugin.scripts]
-jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
+juju-jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
 
 [build-system]
 requires = ["poetry-core"]
