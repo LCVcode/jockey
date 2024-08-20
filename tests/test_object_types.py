@@ -1,4 +1,4 @@
-from jockey import convert_object_abbreviation, ObjectType
+from jockey.core import ObjectType, convert_object_abbreviation
 
 
 def test_object_type_retrieval():

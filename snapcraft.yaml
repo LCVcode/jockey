@@ -1,0 +1,37 @@
+name: juju-jockey
+base: core22
+adopt-info: juju-jockey
+summary: Jockey is a utility for filtering and navigating Juju objects
+description: |
+  Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.
+  It uses automatic caching of Juju's status in json format to enable faster parsing.
+license: MIT
+grade: stable
+confinement: classic
+
+architectures: [amd64, i386, arm64, armhf, ppc64el]
+
+apps:
+  juju-jockey:
+    command: bin/juju-jockey
+    plugs:
+      - home
+
+parts:
+  juju-jockey:
+    plugin: python
+    source: .
+    source-type: local
+    build-snaps:
+      - jq
+      - remarshal
+    build-environment:
+      - SNAPCRAFT_PYTHON_INTERPRETER: python3.10
+    build-packages:
+      - python3.10
+    stage-packages:
+      - python3.10-minimal
+      - python3.10-venv
+    override-build: |
+      craftctl default
+      craftctl set version="$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
