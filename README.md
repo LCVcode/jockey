@@ -107,6 +107,16 @@ ceph-osd/0 ceph-osd/1 ceph-osd/2
 </pre>
 </details>
 
+<!-- jockey units app/'control|dash' -->
+<details>
+<summary><code>jockey units app/'control|dash'</code></summary>
+<pre>
+controller/0 juju-dashboard/0
+</pre>
+</details>
+
+
+
 <!-- jockey charms machine=1 -->
 <details>
 <summary><code>jockey charms machine=1</code></summary>

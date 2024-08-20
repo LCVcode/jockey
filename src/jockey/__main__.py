@@ -42,6 +42,8 @@ There are four possible values for <filter code>:
     {FilterMode.NOT_EQUALS.value.ljust(3)}: does not match
     {FilterMode.CONTAINS.value.ljust(3)}: contains
     {FilterMode.NOT_CONTAINS.value.ljust(3)}: does not contain
+    {FilterMode.REGEX.value.ljust(3)}: matches regex
+    {FilterMode.NOT_REGEX.value.ljust(3)}: does not match regex
 Exactly one <filter code> must be given per filter.
 
 <content> is a given string that will be used to filter Juju object names.
@@ -69,6 +71,9 @@ Jockey object name abbreviations:
 
  Get all non-lxd machines:
      jockey m m^~lxd
+
+ Get units for applications matching a regular expression:
+     jockey u a/'telegraf-ceph-(osd|mon)'
 
 
 +-------------------+

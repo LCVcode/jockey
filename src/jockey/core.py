@@ -5,9 +5,13 @@
 
 from dataclasses import dataclass
 from enum import Enum
-import re
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
+import regex
+
+
+# Regular Expression timeout provided in an effort to avoid ReDoS.
+REGEX_TIMEOUT = 10
 
 JujuStatus = Dict[str, Any]
 
@@ -15,20 +19,16 @@ JujuStatus = Dict[str, Any]
 class FilterMode(Enum):
     EQUALS = "="
     CONTAINS = "~"
+    REGEX = "/"
     NOT_EQUALS = "^="
     NOT_CONTAINS = "^~"
+    NOT_REGEX = "^/"
 
 
-POSITIVE_MODES = (
-    FilterMode.EQUALS,
-    FilterMode.CONTAINS,
-)
+POSITIVE_MODES = (FilterMode.EQUALS, FilterMode.CONTAINS, FilterMode.REGEX)
 
 
-NEGATIVE_MODES = (
-    FilterMode.NOT_EQUALS,
-    FilterMode.NOT_CONTAINS,
-)
+NEGATIVE_MODES = (FilterMode.NOT_EQUALS, FilterMode.NOT_CONTAINS, FilterMode.NOT_REGEX)
 
 
 class ObjectType(Enum):
@@ -109,7 +109,7 @@ def parse_filter_string(
         The constructed JockeyFilter object
     """
 
-    filter_code_pattern = re.compile(r"[=^~]+")
+    filter_code_pattern = regex.compile(r"[=^~/]+")
 
     filter_codes = filter_code_pattern.findall(filter_str)
     assert len(filter_codes) == 1, "Incorrect number of filter codes detected."
@@ -139,6 +139,8 @@ FILTER_ACTION_MAP = {
     FilterMode.NOT_EQUALS: lambda c, v: c != v,
     FilterMode.CONTAINS: lambda c, v: c in v,
     FilterMode.NOT_CONTAINS: lambda c, v: c not in v,
+    FilterMode.REGEX: lambda c, v: regex.search(c, v, regex.I | regex.U, timeout=REGEX_TIMEOUT),
+    FilterMode.NOT_REGEX: lambda c, v: not regex.search(c, v, regex.I | regex.U, timeout=REGEX_TIMEOUT),
 }
 
 

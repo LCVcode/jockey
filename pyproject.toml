@@ -23,6 +23,7 @@ juju-jockey = "jockey.__main__:main"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 click = "^8.1.7"
+regex = "^2024.7.24"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
