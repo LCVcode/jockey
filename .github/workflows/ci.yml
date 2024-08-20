@@ -241,8 +241,15 @@ jobs:
       - name: Snapcraft
         uses: snapcore/action-build@v1
         id: snapcraft
+      - name: Upload logs on failure
+        if: failure()
+        uses: action/upload-artifact@v4
+        with:
+          name: snapcraft-logs
+          path: ~/.local/state/snapcraft/log/*.log
       - name: Upload Snap artifact
         uses: actions/upload-artifact@v3
         with:
           name: snap
           path: ${{ steps.snapcraft.outputs.snap }}
+
