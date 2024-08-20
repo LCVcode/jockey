@@ -28,5 +28,5 @@ parts:
     build-environment:
       - CRAFT_PYTHON_INTERPRETER: python3.10
     override-build: |
-      craftctl build
+      craftctl default
       craftctl set-version "$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
