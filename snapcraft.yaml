@@ -26,7 +26,12 @@ parts:
       - jq
       - remarshal
     build-environment:
-      - CRAFT_PYTHON_INTERPRETER: python3.10
+      - SNAPCRAFT_PYTHON_INTERPRETER: python3.10
+    build-packages:
+      - python3.10
+    stage-packages:
+      - python3.10-minimal
+      - python3.10-venv
     override-build: |
       craftctl default
-      craftctl set-version "$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
+      craftctl set version="$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
