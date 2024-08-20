@@ -31,6 +31,6 @@ parts:
       - SNAPCRAFT_PYTHON_INTERPRETER: python3.9
     override-build: |
       export PATH="${PATH}:${HOME}/.local/bin"
-      dephell deps convert --from-path pyproject.toml --from-format poetry --to-path setup.py --to-format setuppy
+      python3 -m dephell deps convert --from-path pyproject.toml --from-format poetry --to-path setup.py --to-format setuppy
       snapcraftctl build
       snapcraftctl set-version "$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"
