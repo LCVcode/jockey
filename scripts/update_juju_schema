@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""
+A tool for updating the strong Python typing for Juju by processing the output from the schemagen project.
+"""
+
+__author__ = "John Lettman"
+__email__ = "the@johnlettman.com"
+__license__ = "MIT"
+
+import json
+import logging
+import os
+import random
+import re
+import sys
+from argparse import Namespace, ArgumentParser
+from subprocess import Popen, PIPE
+from tempfile import TemporaryDirectory
+from typing import Optional, Any, Dict, Generator, NamedTuple, cast, Union
+
+import jsonschema_gentypes
+from jsonschema_gentypes import jsonschema_draft_04, jsonschema_draft_2019_09_meta_data, normalize
+from jsonschema_gentypes.api import API
+from jsonschema_gentypes.api_draft_04 import APIv4
+from jsonschema_gentypes.api_draft_2019_09 import APIv201909
+from jsonschema_gentypes.cli import process_config
+from jsonschema_gentypes.configuration import Configuration, GenerateItem
+
+DEFAULT_ALLOW_LIST = ["full_status"]
+
+SCHEMA_HEADER = "https://json-schema.org/draft/2020-12/schema"
+
+SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
+SCHEMAGEN_DIR = os.path.join(SCRIPTS_DIR, "schemagen")
+REPO_DIR = os.path.dirname(SCRIPTS_DIR)
+OUTPUT_DIR = os.path.join(REPO_DIR, "src", "jockey", "juju_schema")
+
+SCHEMAGEN = "schemagen.go"
+
+LOGGING_LEVELS = {
+    0: logging.ERROR,
+    1: logging.WARN,
+    2: logging.INFO,
+    3: logging.DEBUG,
+}
+
+logger = logging.getLogger(__name__)
+
+
+class DefinitionResult(NamedTuple):
+    title: str
+    module_name: str
+    output_module_name: str
+    output_module_path: str
+    output_file_name: str
+    output_file_path: str
+
+
+def new_ref_to_proposed_name(self, ref: str) -> str:
+    logger.debug("Overriding (new_ref_to_proposed_name) name mangling on %s", ref)
+    ref_proposed_name = ref
+
+    if ref.startswith("#/$defs/"):
+        ref_proposed_name = ref[len("#/$defs/"):]
+    elif ref.startswith("#/"):
+        ref_proposed_name = ref[len("#/"):]
+    if "/" in ref_proposed_name:
+        ref_proposed_name = ref_proposed_name.replace("/", " ")
+
+    return ref_proposed_name
+
+
+def new_get_name(
+        schema: Optional[
+            Union[
+                jsonschema_draft_04.JSONSchemaD4,
+                jsonschema_draft_2019_09_meta_data.JSONSchemaItemD2019,
+            ]
+        ],
+        proposed_name: Optional[str] = None,
+        _1: bool = True,
+        _2: Optional[str] = None,
+        postfix: Optional[str] = None,
+) -> str:
+    # Get the base name
+    has_title = isinstance(schema, dict) and "title" in schema
+    name = schema["title"] if has_title else proposed_name  # type: ignore
+    assert name is not None
+    name = normalize(name) # type: ignore
+
+    prefix = "" if has_title else "_"
+    rand = str(random.randint(0, 9999)) if name != "Root" else ""  # nosec
+
+    logger.debug("Overriding (new_get_name) name mangling on %s", name)
+    output = prefix + "".join([char for char in name if not char.isspace()])
+
+    if postfix:
+        output += postfix
+    if not jsonschema_gentypes.get_name.__dict__.get("names"):
+        jsonschema_gentypes.get_name.__dict__["names"] = set()
+    elif output in jsonschema_gentypes.get_name.__dict__["names"]:
+        output += rand
+    jsonschema_gentypes.get_name.__dict__["names"].add(output)
+    return output
+
+def new_api_get_name(
+    self,
+    schema: Optional[
+        Union[
+            jsonschema_draft_04.JSONSchemaD4,
+            jsonschema_draft_2019_09_meta_data.JSONSchemaItemD2019,
+        ]
+    ],
+    proposed_name: Optional[str] = None,
+    upper: bool = False,
+    postfix: Optional[str] = None,
+) -> str:
+    return new_get_name(schema, proposed_name, upper, self.get_name_properties, postfix=postfix)
+
+API.get_name = new_api_get_name
+APIv201909.ref_to_proposed_name = new_ref_to_proposed_name
+APIv4.ref_to_proposed_name = new_ref_to_proposed_name
+jsonschema_gentypes.get_name = new_get_name
+
+
+def schemagen() -> Any:
+    command = ['go', 'run', SCHEMAGEN]
+    logger.info("Running schemagen: %s", command)
+
+    process = Popen(command, cwd=SCHEMAGEN_DIR, stdout=PIPE)
+    output = json.load(process.stdout)
+    logger.debug("Obtained schemagen output: %s", output)
+    return output
+
+
+def camel_to_snake(name: str) -> str:
+    name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name)
+    name = re.sub('([A-Z]+)([A-Z][a-z])', r'\1_\2', name)
+    return name.lower()
+
+
+def merge_definitions(output: Any) -> Dict[str, Any]:
+    definitions = {}
+
+    for item in output:
+        if "Schema" in item and "definitions" in item["Schema"]:
+            definitions.update(item["Schema"]["definitions"])
+
+    return definitions
+
+
+def emit_definitions(definitions: Dict[str, Any], output_dir: str) -> Generator[DefinitionResult, None, None]:
+    for key, value in definitions.items():
+        module_name = camel_to_snake(key)
+
+        output_module_name = module_name + ".py"
+        output_module_path = os.path.join(OUTPUT_DIR, output_module_name)
+
+        output_file_name = module_name + ".json"
+        output_file_path = os.path.join(output_dir, output_file_name)
+
+        schema = {
+            "$schema": SCHEMA_HEADER,
+            "title": key,
+            "definitions": {
+                k: {
+                    "type": "object",
+                    "$ref": f"{os.path.join(output_dir, camel_to_snake(k) + '.json')}"
+                } for k in definitions
+            },
+            **value
+        }
+
+        with open(output_file_path, "w") as f:
+            logger.info("Emitting %s", output_file_name)
+            json.dump(schema, f, indent=4)
+
+        yield DefinitionResult(key, module_name, output_module_name, output_module_path, output_file_name,
+                               output_file_path)
+
+
+def parse_args(argv: Optional[list[str]]) -> Namespace:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    parser = ArgumentParser(prog="update_juju_schema", description=__doc__)
+    parser.add_argument("-v", "--verbose", dest="verbosity", action="count", default=0,
+                        help="Verbosity (between 1-4 occurrences with more leading to more "
+                             "verbose logging). CRITICAL=0, ERROR=1, WARN=2, INFO=3, "
+                             "DEBUG=4")
+
+    return parser.parse_args(argv)
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    args = parse_args(argv)
+    logging.basicConfig(level=LOGGING_LEVELS[args.verbosity])
+
+    output = schemagen()
+    merged = merge_definitions(output)
+
+    with TemporaryDirectory() as temp_dir:
+        logger.info("Working in %s", temp_dir)
+        results = list(emit_definitions(merged, temp_dir))
+
+        emitted_file_paths = map(lambda result: result.output_file_path, results)
+        filtered_results = filter(
+            lambda result: result.title in DEFAULT_ALLOW_LIST or result.module_name in DEFAULT_ALLOW_LIST,
+            results)
+        generate = map(lambda result: cast(GenerateItem, {
+            "source": result.output_file_path,
+            "destination": result.output_module_path,
+        }), filtered_results)
+
+        config: Configuration = {"generate": list(generate)}
+        logger.info("Using configuration %s", config)
+
+        logger.info("Writing to %s", OUTPUT_DIR)
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+        process_config(config, list(emitted_file_paths))
+
+    return 0
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
