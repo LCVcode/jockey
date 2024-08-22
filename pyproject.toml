@@ -23,6 +23,11 @@ juju-jockey = "jockey.__main__:main"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 click = "^8.1.7"
+fabric = "^3.2.2"
+invoke = "^2.2.0"
+orjson = "^3.10.7"
+xdgenvpy = "^2.4.0"
+python-slugify = "^8.0.4"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"

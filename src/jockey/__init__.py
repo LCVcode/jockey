@@ -9,3 +9,5 @@ __version__ = "0.1.0"
 # TODO: Add the license when #28 is closed
 __license__ = "TBD"
 __copyright__ = "TBD"
+
+__docformat__ = "numpy"

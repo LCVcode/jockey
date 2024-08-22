@@ -16,6 +16,7 @@ from jockey.core import (
 )
 from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
 
+from jockey.juju import Cloud
 
 INFO_MESSAGE = f"""
 +----+
@@ -126,7 +127,10 @@ def main(argv: Optional[Sequence[str]] = None):
         cache_juju_status()
 
     # Get status
-    status = retrieve_juju_cache() if not args.file else read_local_juju_status_file(args.file)
+    status = Cloud("localhost").juju_status()
+
+        # TODO: replicate:
+        # read_local_juju_status_file(args.file))
 
     RETRIEVAL_MAP = {
         ObjectType.CHARM: None,
