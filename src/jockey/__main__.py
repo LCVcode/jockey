@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-from argparse import ArgumentParser, FileType, Namespace
+from argparse import SUPPRESS, ArgumentParser, FileType, Namespace
+import logging
 import sys
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
+from orjson import loads as json_loads
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.traceback import install as install_traceback
+from rich_argparse import ArgumentDefaultsRichHelpFormatter
+
+from jockey.__init__ import __issues__ as issues
+from jockey.__init__ import __repository__ as repository
 from jockey.__init__ import __version__ as version
+from jockey.cache import DEFAULT_CACHE_BASE_PATH, FileCache
 from jockey.core import (
     FilterMode,
     ObjectType,
@@ -14,9 +24,17 @@ from jockey.core import (
     list_abbreviations,
     parse_filter_string,
 )
-from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
-
 from jockey.juju import Cloud
+
+
+logger = logging.getLogger(__name__)
+
+LOGGING_LEVELS = {
+    0: logging.ERROR,
+    1: logging.WARN,
+    2: logging.INFO,
+    3: logging.DEBUG,
+}
 
 INFO_MESSAGE = f"""
 +----+
@@ -80,33 +98,82 @@ Jockey object name abbreviations:
 """
 
 
-def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
-    parser = ArgumentParser(prog="jockey", description=__doc__, epilog=f"Version {version}")
-
-    # Add cache refresh flag
-    parser.add_argument("--refresh", action="store_true", help="Force a cache update")
-
-    # Add object type argument
-    parser.add_argument(
-        "object",
-        help="Choose an object type to query or 'info'",
+def configure_logging(logging_level: Union[int, str, None]) -> None:
+    logging.basicConfig(
+        level=logging_level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[
+            RichHandler(
+                console=Console(stderr=True, markup=True),
+                rich_tracebacks=True,
+                tracebacks_show_locals=True,
+                locals_max_length=4,
+                markup=True,
+            )
+        ],
+    )
+    logger.debug(
+        "Logger configured with level %s",
+        logging.getLevelName(logging_level or logging.NOTSET),
     )
 
-    # Add filters as positional arguments
-    parser.add_argument(
+    install_traceback(show_locals=True)
+    logger.debug("Traceback handler installed.")
+
+
+def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
+    epilog = (
+        f"[grey50]Version {version}[/] | "
+        f"[dark_cyan][link={repository}]{repository}[/][/] | "
+        f"[dark_cyan][link={issues}]{issues}[/][/]"
+    )
+    parser = ArgumentParser(
+        prog="jockey", description=__doc__, epilog=epilog, formatter_class=ArgumentDefaultsRichHelpFormatter
+    )
+
+    parser.add_argument("-v", "--verbose", default=0, action="count", help="increase logging verbosity")
+
+    # Filtering
+    group_filtering = parser.add_argument_group("Filtering Arguments")
+    group_filtering.add_argument(
+        "object",
+        help="object type to query from Juju (use 'info' to see options)",
+    )
+    group_filtering.add_argument(
         "filters",
         type=parse_filter_string,
         nargs="*",
-        help="Specify filters for your query.",
+        default=SUPPRESS,
+        help="filters to query for objects",
     )
-
-    # Optional import from a json file
-    parser.add_argument(
+    group_filtering.add_argument(
         "-f",
         "--file",
         type=FileType("r"),
-        help="Use a local Juju status JSON file",
+        default=SUPPRESS,
+        help="use a local Juju status JSON file",
     )
+
+    # Remote Juju Options
+    group_remote = parser.add_argument_group(
+        title="Remote Juju Options", description="SSH connections to remote systems with Juju"
+    )
+    group_remote.add_argument(
+        "-H", "--host", metavar="HOSTNAME", default=SUPPRESS, help="hostname or IP for Juju over SSH"
+    )
+    group_remote.add_argument("-U", "--user", metavar="USERNAME", default=SUPPRESS, help="username for Juju over SSH")
+
+    # Cache Options
+    group_cache = parser.add_argument_group("Cache Options", "Management of the local Juju object cache")
+    group_cache.add_argument(
+        "-c",
+        "--cache",
+        metavar="DIR",
+        default=DEFAULT_CACHE_BASE_PATH,
+        help="storage location of the local Juju object cache",
+    )
+    group_cache.add_argument("--refresh", action="store_true", help="clean and refresh the cache")
 
     return parser.parse_args(argv)
 
@@ -116,21 +183,24 @@ def main(argv: Optional[Sequence[str]] = None):
         argv = sys.argv[1:]
 
     args = parse_args(argv)
+    configure_logging(LOGGING_LEVELS[(args.verbose if "verbose" in args else 0) % len(LOGGING_LEVELS)])
 
     # Check if 'help' was requested
     if args.object == "info":
         print(INFO_MESSAGE)
         return
 
-    # Perform any requested cache refresh
-    if args.refresh:
-        cache_juju_status()
+    cache = FileCache(args.cache)
+    if "refresh" in args and args.refresh:
+        cache.clear()
+        logger.info("Cleared file cache at %s", args.cache)
 
     # Get status
-    status = Cloud("localhost").juju_status()
-
-        # TODO: replicate:
-        # read_local_juju_status_file(args.file))
+    if "file" in args:
+        status = json_loads(args.file.read())
+        args.file.close()
+    else:
+        status = Cloud("localhost", cache=cache).juju_status()
 
     RETRIEVAL_MAP = {
         ObjectType.CHARM: None,
@@ -145,8 +215,9 @@ def main(argv: Optional[Sequence[str]] = None):
     assert obj_type, f"'{args.object}' is not a valid object type."
 
     action = RETRIEVAL_MAP[obj_type]
+    filters = args.filters if "filters" in args else []
     assert action, f"Parsing {obj_type} is not implemented."
-    print(" ".join(action(status, args.filters)))
+    print(" ".join(action(status, filters)))
 
 
 if __name__ == "__main__":

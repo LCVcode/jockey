@@ -28,6 +28,7 @@ invoke = "^2.2.0"
 orjson = "^3.10.7"
 xdgenvpy = "^2.4.0"
 python-slugify = "^8.0.4"
+rich-argparse = "^1.5.2"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
