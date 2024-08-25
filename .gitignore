@@ -30,6 +30,7 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+setup.py
 
 # Installer logs
 pip-log.txt
