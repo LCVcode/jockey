@@ -7,15 +7,34 @@ description: |
   It uses automatic caching of Juju's status in json format to enable faster parsing.
 license: MIT
 grade: stable
-confinement: classic
+confinement: strict
 
 architectures: [amd64, i386, arm64, armhf, ppc64el]
+
+plugs:
+  juju-bin:
+    interface: content
+    content: juju-bin
+    target: $SNAP/usr/juju
+    default-provider: juju
+  dot-local-share-juju:
+    interface: personal-files
+    read:
+      - $HOME/.local/share/juju
+      - $HOME/.local/share/juju/ssh
+      - $HOME/.local/share/juju/lxd
+    write:
+      - $HOME/.local/share/juju/cookies
 
 apps:
   juju-jockey:
     command: bin/juju-jockey
     plugs:
+      - juju-bin
+      - dot-local-share-juju
       - home
+      - ssh-keys
+      - network
 
 parts:
   juju-jockey:
