@@ -603,7 +603,18 @@ files = [
     {file = "typing_extensions-4.12.2.tar.gz", hash = "sha256:1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8"},
 ]
 
+[[package]]
+name = "xdgenvpy"
+version = "2.4.0"
+description = "Another XDG Base Directory Specification utility."
+optional = false
+python-versions = "*"
+files = [
+    {file = "xdgenvpy-2.4.0-py3-none-any.whl", hash = "sha256:4c4e427a753e8ecb0e336a7cd7eacd55f91a5fc8fd1fa42a957706fccf2b9949"},
+    {file = "xdgenvpy-2.4.0.tar.gz", hash = "sha256:ff3f0d36a7ae77b25a47c9e37daa66e009acb7a14dbec257331a1254e1e690d3"},
+]
+
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "a780f5dc84b6f0b702b1929825b9bde769ae18ac6c0fc8db4b5aaff1bbaf65f0"
+content-hash = "46c9d0b7cad1f7cb639ee49b89cdc59323215c9e2ba52ad5634b2e1989a3a921"
