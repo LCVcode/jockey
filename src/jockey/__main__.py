@@ -1,223 +1,145 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-from argparse import SUPPRESS, ArgumentParser, FileType, Namespace
 import logging
+import os
 import sys
-from typing import Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence
 
+from dotty_dict import dotty
 from orjson import loads as json_loads
+from rich import print
 from rich.console import Console
 from rich.logging import RichHandler
+from rich.panel import Panel
 from rich.traceback import install as install_traceback
-from rich_argparse import ArgumentDefaultsRichHelpFormatter
 
-from jockey.__init__ import __issues__ as issues
-from jockey.__init__ import __repository__ as repository
-from jockey.__init__ import __version__ as version
-from jockey.cache import DEFAULT_CACHE_BASE_PATH, FileCache
-from jockey.core import (
-    FilterMode,
-    ObjectType,
-    convert_object_abbreviation,
-    filter_machines,
-    filter_units,
-    list_abbreviations,
-    parse_filter_string,
-)
-from jockey.juju import Cloud
+from jockey.__args__ import parse_args
+from jockey.cache import FileCache
+from jockey.cloud import Cloud, CloudCredentialsException
+from jockey.filters import parse_filter_expressions
+from jockey.objects import Object
 
 
 logger = logging.getLogger(__name__)
 
-LOGGING_LEVELS = {
-    0: logging.ERROR,
-    1: logging.WARN,
-    2: logging.INFO,
-    3: logging.DEBUG,
-}
-
-INFO_MESSAGE = f"""
-+----+
-|NOTE|
-+----+
-Jockey is a work-in-progress currently only supports querying:
-    units
-    machines
+DEBUG_ENV_VAR = "JOCKEY_DEBUG"
 
 
-+-------+
-|FILTERS|
-+-------+
-Filters have a three-part syntax:
-    <object type><filter code><content>
+def configure_logging(verbosity: int) -> None:
+    levels = {
+        0: logging.ERROR,
+        1: logging.WARN,
+        2: logging.INFO,
+        3: logging.DEBUG,
+    }
 
-<object type> can be any supported Juju object types or their equivalent
-abbreviations (see "SHORT NAMES", below).  These values are identical to the
-`object` argument in the Jockey CLI.
+    level = levels[verbosity % len(levels)]
+    level_name = logging.getLevelName(level)
+    handler = RichHandler(
+        console=Console(stderr=True, markup=True),
+        rich_tracebacks=(DEBUG_ENV_VAR in os.environ),
+        tracebacks_show_locals=(DEBUG_ENV_VAR in os.environ),
+        tracebacks_suppress=["paramiko", "invoke", "fabric"],
+        locals_max_length=4,
+        markup=True,
+    )
 
-<filter code> specifies how objects should be filtered relative to <content>
-There are four possible values for <filter code>:
-    {FilterMode.EQUALS.value.ljust(3)}: matches
-    {FilterMode.NOT_EQUALS.value.ljust(3)}: does not match
-    {FilterMode.CONTAINS.value.ljust(3)}: contains
-    {FilterMode.NOT_CONTAINS.value.ljust(3)}: does not contain
-Exactly one <filter code> must be given per filter.
-
-<content> is a given string that will be used to filter Juju object names.
-
-
-+-----------+
-|SHORT NAMES|
-+-----------+
-Jockey object name abbreviations:
-
-{list_abbreviations()}
-
-
-+---------------+
-|EXAMPLE QUERIES|
-+---------------+
- Get all units:
-     jockey units
-
- Get all nova-compute units:
-     jockey units application=nova-compute
-
- Get the hw-health unit on a machine with a partial hostname "e01":
-    jockey u a=hw-health host~e01
-
- Get all non-lxd machines:
-     jockey m m^~lxd
-
-
-+-------------------+
-|OPERATIONS EXAMPLES|
-+-------------------+
- Run a 'show-sel' action a machine with a partial host name 'ts1363co':
-     juju run-action --wait $(jockey u a~hw-hea m~ts1363co) show-sel
-"""
-
-
-def configure_logging(logging_level: Union[int, str, None]) -> None:
     logging.basicConfig(
-        level=logging_level,
+        level=level,
         format="%(message)s",
         datefmt="[%X]",
-        handlers=[
-            RichHandler(
-                console=Console(stderr=True, markup=True),
-                rich_tracebacks=True,
-                tracebacks_show_locals=True,
-                locals_max_length=4,
-                markup=True,
-            )
-        ],
+        handlers=[handler],
     )
     logger.debug(
         "Logger configured with level %s",
-        logging.getLevelName(logging_level or logging.NOTSET),
+        level_name,
     )
 
     install_traceback(show_locals=True)
     logger.debug("Traceback handler installed.")
 
 
-def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
-    epilog = (
-        f"[grey50]Version {version}[/] | "
-        f"[dark_cyan][link={repository}]{repository}[/][/] | "
-        f"[dark_cyan][link={issues}]{issues}[/][/]"
-    )
-    parser = ArgumentParser(
-        prog="jockey", description=__doc__, epilog=epilog, formatter_class=ArgumentDefaultsRichHelpFormatter
-    )
-
-    parser.add_argument("-v", "--verbose", default=0, action="count", help="increase logging verbosity")
-
-    # Filtering
-    group_filtering = parser.add_argument_group("Filtering Arguments")
-    group_filtering.add_argument(
-        "object",
-        help="object type to query from Juju (use 'info' to see options)",
-    )
-    group_filtering.add_argument(
-        "filters",
-        type=parse_filter_string,
-        nargs="*",
-        default=SUPPRESS,
-        help="filters to query for objects",
-    )
-    group_filtering.add_argument(
-        "-f",
-        "--file",
-        type=FileType("r"),
-        default=SUPPRESS,
-        help="use a local Juju status JSON file",
-    )
-
-    # Remote Juju Options
-    group_remote = parser.add_argument_group(
-        title="Remote Juju Options", description="SSH connections to remote systems with Juju"
-    )
-    group_remote.add_argument(
-        "-H", "--host", metavar="HOSTNAME", default=SUPPRESS, help="hostname or IP for Juju over SSH"
-    )
-    group_remote.add_argument("-U", "--user", metavar="USERNAME", default=SUPPRESS, help="username for Juju over SSH")
-
-    # Cache Options
-    group_cache = parser.add_argument_group("Cache Options", "Management of the local Juju object cache")
-    group_cache.add_argument(
-        "-c",
-        "--cache",
-        metavar="DIR",
-        default=DEFAULT_CACHE_BASE_PATH,
-        help="storage location of the local Juju object cache",
-    )
-    group_cache.add_argument("--refresh", action="store_true", help="clean and refresh the cache")
-
-    return parser.parse_args(argv)
-
-
 def main(argv: Optional[Sequence[str]] = None):
+    # parse command-line arguments and configure logging
     if argv is None:
         argv = sys.argv[1:]
 
     args = parse_args(argv)
-    configure_logging(LOGGING_LEVELS[(args.verbose if "verbose" in args else 0) % len(LOGGING_LEVELS)])
+    verbosity = args.verbose if "verbose" in args else 0
+    configure_logging(verbosity)
+    logger.debug("Parsed command-line arguments:\n%r", args)
 
-    # Check if 'help' was requested
-    if args.object == "info":
-        print(INFO_MESSAGE)
-        return
+    # obtain OBJECT expression
+    obj_expression = args.object
 
-    cache = FileCache(args.cache)
-    if "refresh" in args and args.refresh:
-        cache.clear()
-        logger.info("Cleared file cache at %s", args.cache)
+    # check if OBJECT is requesting the informational message
+    # TODO: BRING BACK INFO MESSAGE
+    # if obj_expression == "info":
+    #     print("info message")
+    #     return
 
-    # Get status
-    if "file" in args:
-        status = json_loads(args.file.read())
-        args.file.close()
-    else:
-        status = Cloud("localhost", cache=cache).juju_status()
+    # parse the OBJECT expression into its components (object, field)
+    obj, obj_field = Object.parse(args.object)
+    logger.debug("Parsed object expression %r into %r with field %r", obj_expression, obj, obj_field)
 
-    RETRIEVAL_MAP = {
-        ObjectType.CHARM: None,
-        ObjectType.APP: None,
-        ObjectType.UNIT: filter_units,
-        ObjectType.MACHINE: filter_machines,
-        ObjectType.IP: None,
-        ObjectType.HOSTNAME: None,
-    }
+    # obtain the Juju status
+    if "file" in args:  # obtain the Juju status from the provided file
+        status_file = args.file
+        status = json_loads(status_file.read())
+        status_file.close()
+    else:  # obtain the Juju status from the cloud
+        # configure the file cache
+        cache_dir = args.cache if "cache" in args else None
+        cache_age = args.cache_age if "cache_age" in args else None
+        cache_refresh = args.refresh
+        cache = FileCache(cache_dir, cache_age)
+        if cache_refresh:
+            cache.clear()
+            logger.info("Cleared file cache at %s", args.cache)
 
-    obj_type = convert_object_abbreviation(args.object)
-    assert obj_type, f"'{args.object}' is not a valid object type."
+        # obtain cloud configuration
+        cloud_host = args.host if "host" in args else None
+        cloud_user = args.user if "user" in args else None
+        cloud_doas = args.sudo if "sudo" in args else None
+        cloud_timeout = args.timeout if "timeout" in args else None
+        cloud_juju = args.juju if "juju" in args else None
 
-    action = RETRIEVAL_MAP[obj_type]
-    filters = args.filters if "filters" in args else []
-    assert action, f"Parsing {obj_type} is not implemented."
-    print(" ".join(action(status, filters)))
+        # connect to the cloud and get the Juju status
+        cloud = Cloud(host=cloud_host, user=cloud_user, doas=cloud_doas, timeout=cloud_timeout, juju=cloud_juju)
+
+        try:
+            status = cloud.juju_status
+        except CloudCredentialsException as e:
+            print(Panel(e.advice_markup(), title="[red]" + e.message), file=sys.stderr)
+            exit(126)
+        finally:
+            cloud.close()
+
+    # select OBJECTs from the Juju status
+    selection: List[Dict] = []
+    if "filters" not in args:  # select all OBJECTs in the absence of filters
+        selection = obj.collect(status)
+    else:  # apply filtering to OBJECTs
+        # parse the filters into actions
+        actions = parse_filter_expressions(args.filters)
+
+        # collect the OBJECTs
+        collection = obj.collect(status)
+
+        # iterate over each OBJECT in the collection,
+        # check all filters against it,
+        # and add it to our selection if they all pass
+        for item in collection:
+            if all([action(item) for action in actions]):
+                selection.append(item)
+
+    for item in selection:
+        if obj_field is None:
+            print(item["name"])
+        elif obj_field == "":
+            print(item)
+        else:
+            print(dotty(item)[obj_field])
 
 
 if __name__ == "__main__":

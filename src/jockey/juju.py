@@ -1,234 +1,138 @@
-from functools import cached_property
-from ipaddress import ip_address
-import logging
-from shlex import quote as shell_quote
-from typing import Any, Dict, NamedTuple, Optional, Union
+from typing import List
 
-from fabric import Config as FabricConfig
-from fabric import Connection
-from fabric import Result as FabricResult
-from invoke import Config as InvokeConfig
-from invoke import Context
-from invoke import Result as InvokeResult
-from orjson import loads as json_loads
+from typing_extensions import Required
 
-from jockey.cache import FileCache
+from jockey.juju_schema.full_status import ApplicationStatus, FullStatus, MachineStatus, UnitStatus
 
 
-JUJU_CONTROLLER_ENV_VAR = "JUJU_CONTROLLER"
-JUJU_MODEL_ENV_VAR = "JUJU_MODEL"
-
-SSH_DISABLED_ALGORITHMS = {"pubkeys": ["rsa-sha2-512", "rsa-sha2-256"], "keys": ["rsa-sha2-512", "rsa-sha2-256"]}
-
-# TODO: A stub in place of full types.
-# See PR #39 -> https://github.com/LCVcode/jockey/pull/39
-FullStatus = Any
+class JujuUnitStatus(UnitStatus):
+    name: Required[str]
+    host: MachineStatus
 
 
-# TODO: A stub in place of full types.
-class WhoAmI(NamedTuple):
-    controller: str
-    model: str
+class JujuApplicationStatus(ApplicationStatus):
+    name: Required[str]
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+def all_applications(status: FullStatus) -> List[JujuApplicationStatus]:
+    return [JujuApplicationStatus(name=name, **app) for name, app in status["applications"].items()]
 
 
-class CloudInvokeConfig(InvokeConfig):
-    """Override class for invoke.Config to prevent configuration file loading."""
+def all_application_names(status: FullStatus) -> List[str]:
+    """
+    Get all applications in the Juju status by name.
 
-    def _load_file(self, prefix: str, absolute: bool = False, merge: bool = True) -> None:
-        pass
-
-    def _merge_file(self, name: str, desc: str) -> None:
-        pass
-
-    def load_user(self, merge: bool = True) -> None:
-        pass
-
-    def load_system(self, merge: bool = True) -> None:
-        pass
+    Returns
+    =======
+    application_names (Generator[str])
+        All application names, in no particular order, as a generator.
+    """
+    return [app for app in status["applications"].keys()]
 
 
-class CloudFabricConfig(FabricConfig):
-    """Override class for fabric.Config to prevent configuration file loading."""
-
-    def _load_file(self, prefix: str, absolute: bool = False, merge: bool = True) -> None:
-        pass
-
-    def _merge_file(self, name: str, desc: str) -> None:
-        pass
-
-    def load_user(self, merge: bool = True) -> None:
-        pass
-
-    def load_system(self, merge: bool = True) -> None:
-        pass
+def is_subordinate_application(status: FullStatus, app_name: str) -> bool:
+    return "subordinate-to" in status["applications"][app_name]
 
 
-class Cloud(Connection, Context):
-    doas: Optional[str] = None
-    juju: str
-    cache: FileCache
-    command_timeout: Optional[int]
-    localhost: bool = False
+def is_principal_application(status: FullStatus, app_name: str) -> bool:
+    """
+    Test if a given application is principal.  True indicates principal and
+    False indicates subordinate.
 
-    def __init__(
-        self,
-        host: Optional[str] = None,
-        doas: Optional[str] = None,
-        juju: str = "juju",
-        cache: Optional[FileCache] = None,
-        command_timeout: Optional[int] = None,
-        *args,
-        **kwargs,
-    ):
+    Arguments
+    =========
+    app_name (str)
+        The name of the application to check.
 
-        self.doas = doas
-        self.juju = juju or "juju"
-        self.cache = cache or FileCache()
-        self.command_timeout = command_timeout
-        self.original_host = host
+    Returns
+    =======
+    is_principal (bool)
+        Whether the indicated application is principal.
+    """
+    return not is_subordinate_application(status, app_name)
 
-        if Cloud.is_localhost_address(host):
-            config = CloudInvokeConfig()
-            Context.__init__(self, config)
-            self.host = host
-            self.localhost = True
-            logger.debug("Cloud initialized on loopback")
-        else:
-            config = CloudFabricConfig()
-            config.update(
-                connect_kwargs={
-                    "look_for_keys": False,
-                    "allow_agent": True,
-                    "disabled_algorithms": SSH_DISABLED_ALGORITHMS,
-                }
-            )
 
-            Connection.__init__(self, host, *args, config=config, **kwargs)
-            logger.debug("Cloud initialized on remote host %s", host)
+def application_has_units(status: FullStatus, app_name: str) -> bool:
+    return "units" in status["applications"][app_name] and len(status["applications"][app_name]["units"]) > 0
 
-    def __setattr__(self, name, value):
-        if name in self.__annotations__:
-            # Handle attributes defined in Cloud class
-            self.__dict__[name] = value
-        else:
-            # Delegate to the base class
-            super().__setattr__(name, value)
 
-    def __getattr__(self, name):
-        if name in self.__dict__:
-            # Handle attributes defined in Cloud class
-            return self.__dict__[name]
-        else:
-            # Delegate to the base class
-            return super().__getattr__(name)
+def application_units(status: FullStatus, app_name: str) -> List[JujuUnitStatus]:
+    if not application_has_units(status, app_name):
+        return []
 
-    def _patch_run_kwargs(self, kwargs: dict) -> dict:
-        if "hide" not in kwargs:
-            kwargs["hide"] = True
+    units = []
+    for unit_name, unit in status["applications"][app_name]["units"].items():
+        host: MachineStatus = status["machines"][unit["machine"]]
+        units.append(JujuUnitStatus(name=unit_name, host=host, **unit))
+        units.extend(unit_subordinates(status, app_name, unit_name))
 
-        if "warn" not in kwargs:
-            kwargs["warn"] = False
+    return units
 
-        if "timeout" not in kwargs:
-            kwargs["timeout"] = self.command_timeout
 
-        return kwargs
+def application_unit_names(status: FullStatus, app_name: str) -> List[str]:
+    return [unit["name"] for unit in application_units(status, app_name)]
 
-    def __str__(self) -> str:
-        return "localhost" if self.localhost else self.host
 
-    @staticmethod
-    def model_reference(controller: str, model: str) -> str:
-        return f"{controller}:{model}"
+def all_charm_names(status: FullStatus) -> List[str]:
+    """
+    Get all charms in the Juju status by name.
 
-    @staticmethod
-    def is_localhost_address(address: Optional[str]) -> bool:
-        return (
-            not address
-            or address in ("local", "localhost", "localhost.localdomain", "127.0.0.1", "::1", "loopback")
-            or ip_address(address).is_loopback
-        )
+    Returns
+    =======
+    charm_names (Generator[str])
+        All charms names, in no particular order, as a generator.
+    """
+    return [status["applications"][name]["charm"] for name in all_application_names(status)]
 
-    def open(self) -> None:
-        if not self.localhost:
-            self.logger.debug("Opening connection on %s", self)
-            Connection.open(self)
 
-    @cached_property
-    def environ(self) -> Dict[str, str]:
-        result = self.run("env")
-        environ = {}
-        for line in result.stdout.splitlines():
-            key, value = line.split("=", 1)
-            environ[key] = value
+def unit_has_subordinates(status: FullStatus, app_name: str, unit_name: str) -> bool:
+    return (
+        "subordinates" in status["applications"][app_name]["units"][unit_name]
+        and len(status["applications"][app_name]["units"][unit_name]["subordinates"]) > 0
+    )
 
-        logger.debug("Read %i environment variables", len(environ))
-        return environ
 
-    def sudo(self, command, **kwargs) -> Union[FabricResult, InvokeResult]:
-        kwargs = self._patch_run_kwargs(kwargs)
+def unit_subordinate_names(status: FullStatus, app_name: str, unit_name: str) -> List[str]:
+    if not unit_has_subordinates(status, app_name, unit_name):
+        return []
 
-        if self.localhost:
-            logger.debug("Running command with sudo as %s on loopback: '%s'", self.doas, command)
-            return Context.sudo(self, command, user=self.doas, **kwargs)
-        else:
-            logger.debug("Running command with sudo as %s on %s: '%s'", self.doas, self.host, command)
-            return Connection.sudo(self, command, user=self.doas, **kwargs)
+    return [sub_name for sub_name in status["applications"][app_name]["units"][unit_name]["subordinates"].keys()]
 
-    def run(self, command: str, **kwargs) -> Union[FabricResult, InvokeResult]:
-        if self.doas is not None or self.doas != self.user:
-            logger.debug("run() invoked on cloud requiring sudo, passing to sudo()")
-            return self.sudo(command, **kwargs)
 
-        kwargs = self._patch_run_kwargs(kwargs)
+def unit_subordinates(status: FullStatus, app_name: str, unit_name: str) -> List[JujuUnitStatus]:
+    if not unit_has_subordinates(status, app_name, unit_name):
+        return []
 
-        if self.localhost:
-            logger.debug("Running non-sudo command on loopback: '%s'", command)
-            return Context.run(self, command, **kwargs)
-        else:
-            logger.debug("Running non-sudo command on %s: '%s'", self.host, command)
-            return Connection.run(self, command, **kwargs)
+    subs = []
+    for sub_name, sub in status["applications"][app_name]["units"][unit_name]["subordinates"].items():
+        host: MachineStatus = status["machines"][sub["machine"]]
+        subs.append(JujuUnitStatus(name=sub_name, host=host, **sub))
 
-    @cached_property
-    def has_juju(self) -> bool:
-        return self.run("which juju", hide=True, warn=True).return_code == 0
+    return subs
 
-    def run_juju(self, command: str, **kwargs) -> Union[FabricResult, InvokeResult]:
-        command = "juju " + command
-        return self.run(command, **kwargs)
 
-    def run_juju_json(self, command: str, **kwargs) -> Any:
-        if "json" not in command:
-            logger.warning("run_juju_json called without --format=json")
+def all_units(status: FullStatus) -> List[JujuUnitStatus]:
+    units = []
+    for app_name in all_application_names(status):
+        units.extend(application_units(status, app_name))
 
-        result = self.run_juju(command, **kwargs)
-        return json_loads(result.stdout)
+    return units
 
-    @cached_property
-    def juju_whoami(self) -> WhoAmI:
-        if JUJU_CONTROLLER_ENV_VAR in self.environ and JUJU_MODEL_ENV_VAR in self.environ:
-            whoami = WhoAmI(self.environ[JUJU_CONTROLLER_ENV_VAR], self.environ[JUJU_MODEL_ENV_VAR])
-            logger.debug(
-                "Found whoami in environment ('%s', '%s') = %s", JUJU_CONTROLLER_ENV_VAR, JUJU_MODEL_ENV_VAR, whoami
-            )
-            return whoami
 
-        json_whoami = self.run_juju_json("whoami --format=json")
-        return WhoAmI(json_whoami["controller"], json_whoami["model"])
+def all_unit_names(status: FullStatus) -> List[str]:
+    unit_names = []
+    for app_name in all_application_names(status):
+        unit_names.extend(application_unit_names(status, app_name))
 
-    def juju_status(self) -> FullStatus:
-        (controller, model) = self.juju_whoami
-        model_reference = Cloud.model_reference(controller, model)
-        logger.debug("Getting status for '%s'", model_reference)
+    return unit_names
 
-        return self.cache.entry_or(
-            str(self),
-            controller,
-            model,
-            "status",
-            lambda: self.run_juju_json(f"status --format=json --model {shell_quote(model_reference)}"),
-        )
+
+def machine_has_containers(status: FullStatus, machine_id: str) -> bool:
+    return "containers" in status["machines"][machine_id]
+
+
+def machine_container_ids(status: FullStatus, machine_id: str) -> List[str]:
+    if not machine_has_containers(status, machine_id):
+        return []
+
+    return [container for container in status["machines"][machine_id]["containers"].keys()]

@@ -11,6 +11,7 @@ from xdgenvpy import XDGPedanticPackage
 JOCKEY_XDG = XDGPedanticPackage("jockey")
 
 DEFAULT_CACHE_BASE_PATH = JOCKEY_XDG.XDG_CACHE_HOME
+DEFAULT_CACHE_MAX_AGE: float = 300
 
 
 class FileCache:
@@ -19,9 +20,9 @@ class FileCache:
     base_path: str
     max_age: float
 
-    def __init__(self, base_path: str = DEFAULT_CACHE_BASE_PATH, max_age: Optional[float] = 300):
-        self.base_path = base_path
-        self.max_age = max_age
+    def __init__(self, base_path: Optional[str] = None, max_age: Optional[float] = None):
+        self.base_path = base_path if base_path else DEFAULT_CACHE_BASE_PATH
+        self.max_age = max_age if max_age else DEFAULT_CACHE_MAX_AGE
 
     def __repr__(self) -> str:
         return f"FileCache({self.base_path}, max_age={self.max_age})"
