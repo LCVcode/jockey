@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
+from argparse import ArgumentParser, FileType, Namespace
 import os
 import sys
-from argparse import ArgumentParser, FileType, Namespace
 from typing import Optional, Sequence
 
 from jockey.__init__ import __version__ as version
@@ -16,6 +16,7 @@ from jockey.core import (
     parse_filter_string,
 )
 from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
+
 
 if "SNAP" in os.environ:
     os.environ["PATH"] += ":" + os.path.join(os.environ["SNAP"], "usr", "juju", "bin")
