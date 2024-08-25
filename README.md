@@ -1,4 +1,26 @@
+<div align="center">
+
 # Juju Jockey 
+
+*Juju objects at your fingertips 🫰* 
+
+[![License][shield-license]][url-license]
+![Python Version][shield-python]
+![Programming Language][shield-language]
+[![Tests][shield-tests]][url-tests]
+[![Contributors][shield-contributors]][url-contributors]
+
+[shield-license]: https://img.shields.io/github/license/LCVcode/jockey?style=for-the-badge
+[shield-contributors]: https://img.shields.io/github/contributors/LCVcode/jockey?style=for-the-badge
+[shield-python]: https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FLCVcode%2Fjockey%2Fmaster%2Fpyproject.toml&style=for-the-badge
+[shield-language]: https://img.shields.io/github/languages/top/LCVcode/jockey?style=for-the-badge&logo=python
+[shield-tests]: https://img.shields.io/github/actions/workflow/status/LCVcode/jockey/ci.yml?style=for-the-badge&label=tests
+
+[url-license]: LICENSE
+[url-contributors]: https://github.com/LCVcode/jockey/graphs/contributors
+[url-tests]: https://github.com/LCVcode/jockey/actions/workflows/ci.yml
+
+</div>
 
 ## Overview
 

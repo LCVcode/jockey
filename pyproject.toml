@@ -7,6 +7,8 @@ authors = [
     "Connor Chamberlain <connor.chamberlain@canonical.com>",
     "Pedro Castillo <pedro.castillo@canonical.com>"
 ]
+
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
