@@ -7,8 +7,7 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
 from dotty_dict import dotty
 from regex import regex
 
-from jockey.abstractions import C_C, E_C, NE_C, O_C, OE_C, C, T
-
+from jockey.abstractions import C_C, E_C, NE_C, O_C, OE_C, C, T, uses_typevar_params
 
 logger = getLogger(__name__)
 
