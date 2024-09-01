@@ -14,6 +14,10 @@ class JujuApplicationStatus(ApplicationStatus):
     name: Required[str]
 
 
+class JujuMachineStatus(MachineStatus):
+    name: Required[str]
+
+
 def all_applications(status: FullStatus) -> List[JujuApplicationStatus]:
     return [JujuApplicationStatus(name=name, **app) for name, app in status["applications"].items()]
 
@@ -62,7 +66,7 @@ def application_units(status: FullStatus, app_name: str) -> List[JujuUnitStatus]
 
     units = []
     for unit_name, unit in status["applications"][app_name]["units"].items():
-        host: MachineStatus = status["machines"][unit["machine"]]
+        host: MachineStatus = lookup_machine(status, unit["machine"])
         units.append(JujuUnitStatus(name=unit_name, host=host, **unit))
         units.extend(unit_subordinates(status, app_name, unit_name))
 
@@ -104,8 +108,8 @@ def unit_subordinates(status: FullStatus, app_name: str, unit_name: str) -> List
         return []
 
     subs = []
+    host: MachineStatus = lookup_machine(status, status["applications"][app_name]["units"][unit_name]["machine"])
     for sub_name, sub in status["applications"][app_name]["units"][unit_name]["subordinates"].items():
-        host: MachineStatus = status["machines"][sub["machine"]]
         subs.append(JujuUnitStatus(name=sub_name, host=host, **sub))
 
     return subs
@@ -125,6 +129,22 @@ def all_unit_names(status: FullStatus) -> List[str]:
         unit_names.extend(application_unit_names(status, app_name))
 
     return unit_names
+
+
+def all_machines(status: FullStatus) -> List[MachineStatus]:
+    return [JujuMachineStatus(name=name, **machine) for name, machine in status["machines"].items()]
+
+
+def is_container(machine_id: str) -> bool:
+    return "/lxd/" in machine_id
+
+
+def lookup_machine(status: FullStatus, machine_id: str) -> MachineStatus:
+    if is_container(machine_id):
+        root_machine_id = machine_id.split("/")[0]
+        return status["machines"][root_machine_id]["containers"][machine_id]
+    else:
+        return status["machines"][machine_id]
 
 
 def machine_has_containers(status: FullStatus, machine_id: str) -> bool:
