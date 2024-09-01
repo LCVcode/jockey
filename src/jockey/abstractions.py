@@ -59,9 +59,10 @@ Versions
 --------
 - 0.1.1: Initial version with protocol definitions and validation methods.
 """
-import inspect
+
 from abc import ABC, abstractmethod
-from typing import Protocol, TypeVar, Union, Callable, Any, get_type_hints
+import inspect
+from typing import Any, Callable, Protocol, TypeVar, Union, get_type_hints
 
 
 class OrderingComparable(Protocol):

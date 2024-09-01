@@ -9,6 +9,7 @@ from regex import regex
 
 from jockey.abstractions import C_C, E_C, NE_C, O_C, OE_C, C, T, uses_typevar_params
 
+
 logger = getLogger(__name__)
 
 REGEX_TIMEOUT = 100
@@ -125,6 +126,7 @@ def bool_type_parser(value: str) -> bool:
 
 TYPE_PARSERS: Dict[Type[T], Callable[[str], T]] = {bool: bool_type_parser}
 """An override map between types and their corresponding parser functions."""
+
 
 def type_parser_for(t: Type[T]) -> Callable[[str], T]:
     if parser := TYPE_PARSERS.get(t):
