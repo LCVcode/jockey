@@ -59,9 +59,9 @@ Versions
 --------
 - 0.1.1: Initial version with protocol definitions and validation methods.
 """
-
+import inspect
 from abc import ABC, abstractmethod
-from typing import Protocol, TypeVar, Union
+from typing import Protocol, TypeVar, Union, Callable, Any, get_type_hints
 
 
 class OrderingComparable(Protocol):
@@ -199,3 +199,41 @@ C = Union[O_C, E_C, NE_C, OE_C, C_C]
 
 T = TypeVar("T")
 """Any type abstraction."""
+
+
+def uses_typevar_params(func: Callable[..., Any]) -> bool:
+    """
+    Check if all parameters of the given `func` are annotated with `TypeVar`s.
+
+    :param Callable[..., Any] func: The function to be checked.
+    :return: ``True`` if all arguments of the given `func` are annotated with `TypeVar`s,
+        otherwise ``False``.
+    """
+    # raise if we aren't even given a function >:(
+    if not callable(func):
+        raise TypeError("'func' must be a callable object.")
+
+    # grab the function's signature
+    signature = inspect.signature(func)
+
+    # when there are zero parameters, fail
+    if len(signature.parameters) == 0:
+        return False
+
+    # get the type hints for the function
+    hints = get_type_hints(func)
+
+    # check each parameter in the function's signature
+    for param in signature.parameters.values():
+        param_name = param.name
+
+        # when lacking a type hint in a parameter,
+        # we can fast-fail knowing not all parameters are TypeVars
+        if param_name not in hints:
+            return False
+
+        # when we encounter a non-TypeVar parameter, fast-fail
+        if not isinstance(hints[param_name], TypeVar):
+            return False
+
+    return True

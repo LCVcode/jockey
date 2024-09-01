@@ -70,34 +70,34 @@ def less_than_or_equals_filter(value: OE_C, query: OE_C) -> bool:
 
 
 @log_filter_action
-def contains_filter(value: C_C, query: C_C) -> bool:
+def contains_filter(value: C_C, query: Any) -> bool:
     return query in value
 
 
 @log_filter_action
-def not_contains_filter(value: C_C, query: C_C) -> bool:
+def not_contains_filter(value: C_C, query: Any) -> bool:
     return query not in value
 
 
 @dataclass
 class FilterType:
-    tokens: Tuple[str, ...]
+    tokens: set[str]
     name: str
     should_parse: bool
     action: FilterAction
 
 
 class FilterMode(Enum):
-    EQUALS = FilterType(("=", "=="), "equals", True, equals_filter)
-    NOT_EQUALS = FilterType(("^=", "!="), "not equals", True, not_equals_filter)
-    REGEX = FilterType(("%",), "regex", False, regex_filter)
-    NOT_REGEX = FilterType(("^%", "!%"), "not regex", False, not_regex_filter)
-    GREATER_THAN = FilterType((">",), "greater than", True, greater_than_filter)
-    GREATER_THAN_OR_EQUALS = FilterType((">=", "=>"), "greater than or equals", True, greater_than_or_equals_filter)
-    LESS_THAN = FilterType(("<",), "less than", True, less_than_filter)
-    LESS_THAN_OR_EQUALS = FilterType(("<=", "=<"), "less than or equals", True, less_than_or_equals_filter)
-    CONTAINS = FilterType(("~",), "contains", False, contains_filter)
-    NOT_CONTAINS = FilterType(("!~", "^~"), "not contains", False, not_contains_filter)
+    EQUALS = FilterType({"=", "=="}, "equals", equals_filter)
+    NOT_EQUALS = FilterType({"^=", "!="}, "not equals", not_equals_filter)
+    REGEX = FilterType({"%"}, "regex", regex_filter)
+    NOT_REGEX = FilterType({"^%", "!%"}, "not regex", not_regex_filter)
+    GREATER_THAN = FilterType({">"}, "greater than", greater_than_filter)
+    GREATER_THAN_OR_EQUALS = FilterType({">=", "=>"}, "greater than or equals", greater_than_or_equals_filter)
+    LESS_THAN = FilterType({"<"}, "less than", less_than_filter)
+    LESS_THAN_OR_EQUALS = FilterType({"<=", "=<"}, "less than or equals", less_than_or_equals_filter)
+    CONTAINS = FilterType({"~"}, "contains", contains_filter)
+    NOT_CONTAINS = FilterType({"!~", "^~"}, "not contains", not_contains_filter)
 
     def __str__(self) -> str:
         return self.value.name
@@ -135,7 +135,7 @@ def type_parser_for(t: Type[T]) -> Callable[[str], T]:
 
 def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
     for mode in FilterMode:
-        (tokens, _, should_parse, action) = astuple(mode.value)
+        (tokens, _, action) = astuple(mode.value)
         for token in tokens:
             if token in expression:
                 field, query = expression.split(token)
@@ -152,7 +152,7 @@ def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
                 def _filter_action(item: Dict) -> bool:
                     item_field = dotty(item)[field]
 
-                    if should_parse:
+                    if uses_typevar_params(action):
                         field_parser = type_parser_for(type(item_field))
                         logger.debug("Using field parser %r on %r for [b][blue]%s[/][/]", field_parser, field, mode)
                         parsed_query = field_parser(query)
