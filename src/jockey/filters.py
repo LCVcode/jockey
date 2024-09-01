@@ -116,12 +116,12 @@ class FilterMode(Enum):
         return hash(self.name)
 
     @staticmethod
-    def tokens() -> List[str]:
-        return [token for mode in FilterMode for token in mode.value.tokens]
+    def tokens() -> set[str]:
+        return set(token for mode in FilterMode for token in mode.value.tokens)
 
 
 def bool_parser(value: str) -> bool:
-    return value.lower() in ("true", "t", "1", "yes", "y")
+    return value.lower() in {"true", "t", "1", "yes", "y"}
 
 
 TYPE_PARSERS: Dict[Type[T], Callable[[str], T]] = {bool: bool_parser}
