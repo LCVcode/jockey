@@ -40,8 +40,8 @@ class Object(Enum):
         return hash(self.name)
 
     @staticmethod
-    def tokens() -> List[str]:
-        return [token for obj in Object for token in obj.value.names]
+    def tokens() -> set[str]:
+        return set(token for obj in Object for token in obj.value.names)
 
     @staticmethod
     def from_str(obj_name: str) -> "Object":
