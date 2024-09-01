@@ -46,7 +46,7 @@ def regex_filter(value: str, query: str) -> bool:
 
 @log_filter_action
 def not_regex_filter(value: str, query: str) -> bool:
-    return regex.search(value, query, flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is None
+    return regex.search(str(query), str(value), flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is None
 
 
 @log_filter_action
