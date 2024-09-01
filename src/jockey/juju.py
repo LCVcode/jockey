@@ -77,30 +77,11 @@ def application_unit_names(status: FullStatus, app_name: str) -> List[str]:
     return [unit["name"] for unit in application_units(status, app_name)]
 
 
-def all_charm_names(status: FullStatus) -> List[str]:
-    """
-    Get all charms in the Juju status by name.
-
-    Returns
-    =======
-    charm_names (Generator[str])
-        All charms names, in no particular order, as a generator.
-    """
-    return [status["applications"][name]["charm"] for name in all_application_names(status)]
-
-
 def unit_has_subordinates(status: FullStatus, app_name: str, unit_name: str) -> bool:
     return (
         "subordinates" in status["applications"][app_name]["units"][unit_name]
         and len(status["applications"][app_name]["units"][unit_name]["subordinates"]) > 0
     )
-
-
-def unit_subordinate_names(status: FullStatus, app_name: str, unit_name: str) -> List[str]:
-    if not unit_has_subordinates(status, app_name, unit_name):
-        return []
-
-    return [sub_name for sub_name in status["applications"][app_name]["units"][unit_name]["subordinates"].keys()]
 
 
 def unit_subordinates(status: FullStatus, app_name: str, unit_name: str) -> List[JujuUnitStatus]:
@@ -123,14 +104,6 @@ def all_units(status: FullStatus) -> List[JujuUnitStatus]:
     return units
 
 
-def all_unit_names(status: FullStatus) -> List[str]:
-    unit_names = []
-    for app_name in all_application_names(status):
-        unit_names.extend(application_unit_names(status, app_name))
-
-    return unit_names
-
-
 def all_machines(status: FullStatus) -> List[MachineStatus]:
     return [JujuMachineStatus(name=name, **machine) for name, machine in status["machines"].items()]
 
@@ -145,14 +118,3 @@ def lookup_machine(status: FullStatus, machine_id: str) -> MachineStatus:
         return status["machines"][root_machine_id]["containers"][machine_id]
     else:
         return status["machines"][machine_id]
-
-
-def machine_has_containers(status: FullStatus, machine_id: str) -> bool:
-    return "containers" in status["machines"][machine_id]
-
-
-def machine_container_ids(status: FullStatus, machine_id: str) -> List[str]:
-    if not machine_has_containers(status, machine_id):
-        return []
-
-    return [container for container in status["machines"][machine_id]["containers"].keys()]
