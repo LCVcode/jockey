@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
+from jockey.juju import all_applications, all_machines, all_units
 from jockey.juju_schema.full_status import FullStatus
-from jockey.juju import all_applications, all_units
 
 
 ObjectCollector = Callable[[FullStatus], Iterable[Dict]]
@@ -18,10 +18,13 @@ class ObjectType:
 class Object(Enum):
     APPLICATION = ObjectType(("applications", "app", "apps", "application", "a"), all_applications)
     UNIT = ObjectType(("units", "unit", "u"), all_units)
-    # MACHINE = ObjectType(("machines", "machine", "m"), machine_collector)
+    MACHINE = ObjectType(("machines", "machine", "m"), all_machines)
 
     def __str__(self) -> str:
         return self.value.names[0] if len(self.value.names) != 0 else self.name
+
+    def __repr__(self) -> str:
+        return f"Object.{self.name}"
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Object):
