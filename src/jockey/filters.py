@@ -120,14 +120,14 @@ class FilterMode(Enum):
         return set(token for mode in FilterMode for token in mode.value.tokens)
 
 
-def bool_parser(value: str) -> bool:
+def bool_type_parser(value: str) -> bool:
     return value.lower() in {"true", "t", "1", "yes", "y"}
 
 
-TYPE_PARSERS: Dict[Type[T], Callable[[str], T]] = {bool: bool_parser}
+TYPE_PARSERS: Dict[Type[T], Callable[[str], T]] = {bool: bool_type_parser}
+"""An override map between types and their corresponding parser functions."""
 
-
-def get_type_parser(t: Type[T]) -> Callable[[str], T]:
+def type_parser_for(t: Type[T]) -> Callable[[str], T]:
     if parser := TYPE_PARSERS.get(t):
         return parser
     return t
@@ -153,7 +153,7 @@ def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
                     item_field = dotty(item)[field]
 
                     if should_parse:
-                        field_parser = get_type_parser(type(item_field))
+                        field_parser = type_parser_for(type(item_field))
                         logger.debug("Using field parser %r on %r for [b][blue]%s[/][/]", field_parser, field, mode)
                         parsed_query = field_parser(query)
                     else:
