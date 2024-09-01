@@ -9,8 +9,7 @@ __version__ = "0.1.0"
 __repository__ = "https://github.com/LCVcode/jockey"
 __issues__ = "https://github.com/LCVcode/jockey/issues"
 
-# TODO: Add the license when #28 is closed
-__license__ = "TBD"
-__copyright__ = "TBD"
+__license__ = "MIT"
+__copyright__ = "Copyright (c) 2024, Connor Chamberlain"
 
 __docformat__ = "numpy"
