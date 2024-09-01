@@ -60,7 +60,6 @@ Versions
 - 0.1.1: Initial version with protocol definitions and validation methods.
 """
 
-
 from abc import ABC, abstractmethod
 from typing import Protocol, TypeVar, Union
 
