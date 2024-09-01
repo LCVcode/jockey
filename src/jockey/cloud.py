@@ -15,7 +15,7 @@ from invoke import Result as InvokeResult
 from orjson import loads as json_loads
 from paramiko.ssh_exception import PasswordRequiredException
 
-from jockey.cache import FileCache
+from jockey.cache import FileCache, Reference
 from jockey.juju_schema.full_status import FullStatus
 
 
@@ -285,10 +285,8 @@ class Cloud(Connection, Context):
         model_reference = Cloud.model_reference(controller, model)
         logger.debug("Getting status for '%s'", model_reference)
 
+        cache_ref = Reference(str(self), controller, model, "status")
         return self.cache.entry_or(
-            str(self),
-            controller,
-            model,
-            "status",
+            cache_ref,
             lambda: self.run_juju_json(f"status --format=json --model {shell_quote(model_reference)}"),
         )
