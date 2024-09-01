@@ -104,16 +104,16 @@ class FilterMode(Enum):
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, FilterMode):
-            return self.value == other.value
+            return self.name == other.name
         return False
 
     def __ne__(self, other: object) -> bool:
         if isinstance(other, FilterMode):
-            return self.value != other.value
+            return self.name != other.name
         return True
 
     def __hash__(self) -> int:
-        return hash(self.value)
+        return hash(self.name)
 
     @staticmethod
     def tokens() -> List[str]:
