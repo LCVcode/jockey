@@ -1,3 +1,42 @@
+"""
+This module provides a file-based caching system, designed to store and retrieve JSON-serialized Juju data
+associated with unique references. The primary classes included in this module are
+:class:`FileCache` and :class:`Reference`.
+
+Usage
+-----
+This module is intended to be used in scenarios where cached Juju data needs to be stored and accessed for numerous
+environments and contexts.
+The :class:`FileCache` class provides a simple and efficient way to manage this data with
+expiration and retrieval functionalities.
+
+.. code-block:: python
+    :linenos:
+
+    from jockey.cache import FileCache, Reference
+
+    # initialize the cache
+    cache = FileCache()
+
+    # create a reference for localhost on the admin controller and openstack model
+    ref = Reference('localhost', 'admin', 'openstack', 'status')
+
+    # write data to the cache
+    cache.write(ref, {"hello": "world"})
+
+    # read data from the cache
+    data = cache.read(ref)
+
+    # check if the entry exists
+    exists = cache.has(ref)
+
+    # delete the entry
+    cache.delete(ref)
+
+    # clear the cache
+    cache.clear()
+"""
+
 from datetime import datetime
 import os
 from typing import Any, Callable, NamedTuple, Optional
