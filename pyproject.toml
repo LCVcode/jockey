@@ -3,7 +3,7 @@ requires-python = ">=3.10"
 
 [tool.poetry]
 name = "jockey"
-version = "0.1.0"
+version = "0.2.0"
 description = "A CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters."
 readme = "README.md"
 authors = [
