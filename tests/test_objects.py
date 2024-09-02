@@ -13,9 +13,9 @@ from tests.util import SAMPLES_DIR
 @pytest.mark.parametrize(
     "obj, want",
     [
-        (Object.APPLICATION, "applications"),
-        (Object.UNIT, "units"),
-        (Object.MACHINE, "machines"),
+        (Object.APPLICATION, "application"),
+        (Object.UNIT, "unit"),
+        (Object.MACHINE, "machine"),
     ],
 )
 def test_object_str(obj: Object, want: str):
