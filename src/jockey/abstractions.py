@@ -31,19 +31,19 @@ class OrderingComparable(Protocol):
     """
 
     @abstractmethod
-    def __lt__(self, other: "O_C") -> bool:
+    def __lt__(self, other: object) -> bool:
         pass
 
     @abstractmethod
-    def __gt__(self, other: "O_C") -> bool:
+    def __gt__(self, other: object) -> bool:
         pass
 
     @abstractmethod
-    def __le__(self, other: "O_C") -> bool:
+    def __le__(self, other: object) -> bool:
         pass
 
     @abstractmethod
-    def __ge__(self, other: "O_C") -> bool:
+    def __ge__(self, other: object) -> bool:
         pass
 
     @staticmethod
@@ -71,11 +71,11 @@ class EqualityComparable(Protocol):
     """
 
     @abstractmethod
-    def __eq__(self, other: "E_C") -> bool:
+    def __eq__(self, other: object) -> bool:
         pass
 
     @abstractmethod
-    def __ne__(self, other: "E_C") -> bool:
+    def __ne__(self, other: object) -> bool:
         pass
 
     @staticmethod

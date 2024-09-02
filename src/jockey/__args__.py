@@ -5,22 +5,17 @@ from typing import Optional, Sequence
 
 logger = getLogger(__name__)
 
-try:
-    from rich_argparse import ArgumentDefaultsRichHelpFormatter as ArgumentDefaultsHelpFormatter
+from rich_argparse import ArgumentDefaultsRichHelpFormatter as ArgumentDefaultsHelpFormatter
 
-    from jockey import __issues__, __repository__, __version__
+from jockey import __issues__, __repository__, __version__
 
-    epilog = (
-        f"[grey50]Version {__version__}[/] | "
-        f"[dark_cyan][link={__repository__}]{__repository__}[/][/] | "
-        f"[dark_cyan][link={__issues__}]{__issues__}[/][/]"
-    )
-except ImportError as e:
-    logger.warning("Unable to import rich_argparse: %s\nReverting to argparse", e.msg)
-    from argparse import ArgumentDefaultsHelpFormatter
 
-    __version__, __repository__, __issues__ = ("", "", "")
-    epilog = ""
+epilog = (
+    f"[grey50]Version {__version__}[/] | "
+    f"[dark_cyan][link={__repository__}]{__repository__}[/][/] | "
+    f"[dark_cyan][link={__issues__}]{__issues__}[/][/]"
+)
+
 
 # TODO: ORIGINALLY PART OF INFO
 # examples = """

@@ -5,7 +5,7 @@ import os
 import sys
 from typing import Dict, List, Optional, Sequence
 
-from dotty_dict import dotty
+from dotty_dictionary import dotty  # type: ignore[import-untyped]
 from orjson import loads as json_loads
 from rich import print
 from rich.console import Console

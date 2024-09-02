@@ -662,14 +662,14 @@ files = [
 ]
 
 [[package]]
-name = "dotty-dict"
-version = "1.3.1"
-description = "Dictionary wrapper for quick access to deeply nested keys."
+name = "dotty-dictionary"
+version = "1.2.0"
+description = "Dictionary wrapper that provides dot notation access to nested dictionaries"
 optional = false
-python-versions = ">=3.5,<4.0"
+python-versions = ">=3.10,<4.0"
 files = [
-    {file = "dotty_dict-1.3.1-py3-none-any.whl", hash = "sha256:5022d234d9922f13aa711b4950372a06a6d64cb6d6db9ba43d0ba133ebfce31f"},
-    {file = "dotty_dict-1.3.1.tar.gz", hash = "sha256:4b016e03b8ae265539757a53eba24b9bfda506fb94fbce0bee843c6f05541a15"},
+    {file = "dotty_dictionary-1.2.0-py3-none-any.whl", hash = "sha256:9a763d7a5146975ef03e5aa2b978aee43df97140adad9fee4c68f6d80fd36fbb"},
+    {file = "dotty_dictionary-1.2.0.tar.gz", hash = "sha256:035873367519439ab17af8a1b1fe84bd8bf3e7da77f2521c49e86f32c4bcc03a"},
 ]
 
 [[package]]
@@ -2410,6 +2410,31 @@ datetime = ["packaging", "python-dateutil (>=2.8.0,<3.0.0)", "pytz (>=2018.9)"]
 test = ["packaging", "pytest (>=6.0.1)", "python-dateutil (>=2.8.0,<3.0.0)", "pytz (>=2018.9)", "tcolorpy"]
 
 [[package]]
+name = "types-paramiko"
+version = "3.4.0.20240423"
+description = "Typing stubs for paramiko"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-paramiko-3.4.0.20240423.tar.gz", hash = "sha256:aaa98dda232c47886563d66743d3a8b66c432790c596bc3bdd3f17f91be2a8c1"},
+    {file = "types_paramiko-3.4.0.20240423-py3-none-any.whl", hash = "sha256:c56e0d43399a1b909901b1e0375e0ff6ee62e16cd6e00695024abc2e9fe02035"},
+]
+
+[package.dependencies]
+cryptography = ">=37.0.0"
+
+[[package]]
+name = "types-regex"
+version = "2024.7.24.20240726"
+description = "Typing stubs for regex"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-regex-2024.7.24.20240726.tar.gz", hash = "sha256:f9cbebe607f53860bf5979de1e2a80cc04faf4849ee324461f982a3d46276d76"},
+    {file = "types_regex-2024.7.24.20240726-py3-none-any.whl", hash = "sha256:c436d7eace8e6c33cec31630135c804c15cd4ef110baf9cdd370ac6e376ff661"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -2569,4 +2594,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "fcf96004a84af4a5040db59c41b59730fd94ff9f052f99be7a90fb6a991c3a7a"
+content-hash = "9cea5cdbac8d9019ac04834202142490f9f4c207c4415ce44d2681866f609ef2"

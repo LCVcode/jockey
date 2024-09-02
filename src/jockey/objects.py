@@ -20,13 +20,13 @@ Examples
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Iterable, Optional
+from typing import Any, Callable, Iterable, Optional
 
 from jockey.juju import all_applications, all_machines, all_units
 from jockey.juju_schema.full_status import FullStatus
 
 
-ObjectCollector = Callable[[FullStatus], Iterable[dict]]
+ObjectCollector = Callable[[FullStatus], Iterable[Any]]
 """A type alias representing a function that collects objects from the Juju :class:`full_status.FullStatus`."""
 
 
@@ -101,7 +101,7 @@ class Object(Enum):
         raise ValueError(f"Unknown object name '{obj_name}'")
 
     @staticmethod
-    def parse(obj_expression: str) -> ("Object", Optional[str]):
+    def parse(obj_expression: str) -> tuple["Object", Optional[str]]:
         """
         Parses an object expression into its corresponding :class:`Object` and an optional field reference.
 
