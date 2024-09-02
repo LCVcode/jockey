@@ -157,7 +157,7 @@ def wrap_filter_action(mode: FilterMode, field: str, query: str) -> WrappedFilte
 def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
     for mode in FilterMode:
         (tokens, _, action) = astuple(mode.value)
-        for token in tokens:
+        for token in sorted(tokens, key=lambda x: len(x), reverse=True):
             if token in expression:
                 field, query = expression.split(token)
                 logger.debug(
