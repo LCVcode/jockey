@@ -54,7 +54,7 @@ class Object(Enum):
     """Represents Juju machines and their associated collector."""
 
     def __str__(self) -> str:
-        return self.value.names[0] if len(self.value.names) != 0 else self.name
+        return self.name.lower()
 
     def __repr__(self) -> str:
         return f"Object.{self.name}"
