@@ -6,7 +6,7 @@ from string import ascii_letters, digits
 from orjson import loads as json_loads
 import pytest
 
-from src.jockey.objects import FullStatus, Object
+from jockey.objects import FullStatus, Object
 
 
 TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
