@@ -57,27 +57,27 @@ class FileCache:
     def reference_for(cloud: str, controller: str, model: str, component: str) -> Reference:
         return Reference(cloud, controller, model, component)
 
-    def entry_file_path(self, ref: Reference) -> str:
+    def file_path_for(self, ref: Reference) -> str:
         """Returns the path to the entry file for the specified `Reference`."""
         return os.path.join(self.base_path, ref.to_file_name())
 
-    def has_entry(self, ref: Reference) -> bool:
+    def has(self, ref: Reference) -> bool:
         """Checks whether an entry exists in the file system."""
-        return os.path.exists(self.entry_file_path(ref))
+        return os.path.exists(self.file_path_for(ref))
 
-    def read_entry(self, ref: Reference) -> Any:
+    def read(self, ref: Reference) -> Any:
         """Reads the content from a specific entry file."""
-        with open(self.entry_file_path(ref), "rb") as f:
+        with open(self.file_path_for(ref), "rb") as f:
             return json_loads(f.read())
 
-    def write_entry(self, ref: Reference, data: Any) -> None:
+    def write(self, ref: Reference, data: Any) -> None:
         """Writes a serialized JSON data entry to a file."""
-        with open(self.entry_file_path(ref), "wb") as f:
+        with open(self.file_path_for(ref), "wb") as f:
             f.write(json_dumps(data))
 
-    def delete_entry(self, ref: Reference) -> None:
+    def delete(self, ref: Reference) -> None:
         """Deletes an entry from the file system."""
-        os.remove(self.entry_file_path(ref))
+        os.remove(self.file_path_for(ref))
 
     def entry_or(self, ref: Reference, cb: Callable[[], Any]) -> Any:
         """Retrieves data from a cache or computes and caches the data if it is not already present.
@@ -86,22 +86,22 @@ class FileCache:
         - If the data is not present in the cache or is expired, the method calls the provided callable function
           `cb` to compute the data, caches the computed data, and returns the computed data.
         """
-        if self.entry_expired(ref):
+        if self.is_expired(ref):
             data = cb()
-            self.write_entry(ref, data)
+            self.write(ref, data)
             return data
         else:
-            return self.read_entry(ref)
+            return self.read(ref)
 
-    def entry_last_modified(self, ref: Reference) -> float:
+    def last_modified(self, ref: Reference) -> float:
         """Get the last modified timestamp of a specific entry file in the file system."""
-        return os.path.getmtime(self.entry_file_path(ref))
+        return os.path.getmtime(self.file_path_for(ref))
 
-    def entry_age(self, ref: Reference) -> float:
+    def age(self, ref: Reference) -> float:
         """Calculate the age of an entry by subtracting the last modified timestamp of the entry from the
         current timestamp."""
-        return datetime.now().timestamp() - self.entry_last_modified(ref)
+        return datetime.now().timestamp() - self.last_modified(ref)
 
-    def entry_expired(self, ref: Reference, max_age: Optional[float] = None) -> bool:
+    def is_expired(self, ref: Reference, max_age: Optional[float] = None) -> bool:
         """Check if an entry is expired based on its age."""
-        return not self.has_entry(ref) or self.entry_age(ref) > (max_age or self.max_age or 300)
+        return not self.has(ref) or self.age(ref) > (max_age or self.max_age or 300)
