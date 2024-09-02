@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from typing import Any, Callable, NamedTuple, Optional, Union
+from typing import Any, Callable, NamedTuple, Optional
 
 from orjson import dumps as json_dumps
 from orjson import loads as json_loads
