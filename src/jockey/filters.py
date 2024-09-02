@@ -2,7 +2,7 @@ from dataclasses import astuple, dataclass
 from enum import Enum
 from functools import wraps
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
+from typing import Any, Callable, Dict, Iterable, List, Type
 
 from dotty_dict import dotty
 from regex import regex
