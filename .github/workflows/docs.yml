@@ -33,12 +33,16 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root --all-extras --with dev
-      - name: Run pdoc
-        run: poetry run pdoc -o docs src/jockey tests
+      - name: Run Sphinx
+        shell: bash
+        run: |
+          poetry shell
+          cd docs
+          make
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/
+          path: docs/_build/html
 
   deploy:
     name: Deploy documentation

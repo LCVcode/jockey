@@ -4,10 +4,6 @@
 *.sh
 !tests/samples/*
 
-### Documentation
-docs/
-man/
-
 ### Testing
 .github-test-report.md
 
