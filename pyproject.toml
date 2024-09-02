@@ -135,14 +135,5 @@ post-build = "hooks.pyinstaller:post_build"
 juju-jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
 
 [build-system]
-requires = ["poetry-core", "argparse-manpage[setuptools]"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.build]
-generate-setup-file = true
-script = "build.py"
-
-[tool.build_manpages]
-manpages = [
-    "man/juju-jockey.1:function=get_parser:pyfile=src/jockey/__args__.py:project_name=Juju Jockey:manual_title=The Juju Jockey Manual:url=github.com/LCVcode/jockey"
-]
