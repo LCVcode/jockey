@@ -86,9 +86,6 @@ def main(argv: Optional[Sequence[str]] = None):
 
     # check if OBJECT is requesting the informational message
     # TODO: BRING BACK INFO MESSAGE
-    # if obj_expression == "info":
-    #     print("info message")
-    #     return
 
     # parse the OBJECT expression into its components (object, field)
     obj, obj_field = Object.parse(args.object)
