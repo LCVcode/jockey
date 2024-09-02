@@ -139,7 +139,11 @@ def wrap_filter_action(mode: FilterMode, field: str, query: str) -> WrappedFilte
 
     @wraps(action)
     def wrapped_filter_action(item: Dict) -> bool:
-        value = dotty(item)[field]
+        try:
+            value = dotty(item)[field]
+        except KeyError:
+            logger.debug("Could not find field '%s', fast-failing filter", field)
+            return False
 
         if uses_typevar_params(action):
             field_parser = type_parser_for(type(value))
