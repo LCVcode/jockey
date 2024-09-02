@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
 import logging
+from argparse import ArgumentParser, FileType, Namespace
 import os
 import sys
 from typing import Dict, List, Optional, Sequence
@@ -23,7 +24,18 @@ from jockey.objects import Object
 logger = logging.getLogger(__name__)
 
 DEBUG_ENV_VAR = "JOCKEY_DEBUG"
+if "SNAP" in os.environ:
+    os.environ["PATH"] += ":" + os.path.join(os.environ["SNAP"], "usr", "juju", "bin")
 
+
+INFO_MESSAGE = f"""
++----+
+|NOTE|
++----+
+Jockey is a work-in-progress currently only supports querying:
+    units
+    machines
+"""
 
 def configure_logging(verbosity: int) -> None:
     levels = {
