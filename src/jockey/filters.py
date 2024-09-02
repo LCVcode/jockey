@@ -88,7 +88,7 @@ class FilterType:
 
 
 class FilterMode(Enum):
-    EQUALS = FilterType({"=", "=="}, "equals", equals_filter)
+    EQUALS = FilterType({"==", "="}, "equals", equals_filter)
     NOT_EQUALS = FilterType({"^=", "!="}, "not equals", not_equals_filter)
     REGEX = FilterType({"%"}, "regex", regex_filter)
     NOT_REGEX = FilterType({"^%", "!%"}, "not regex", not_regex_filter)
