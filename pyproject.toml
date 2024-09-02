@@ -34,7 +34,7 @@ xdgenvpy = "^2.4.0"
 python-slugify = "^8.0.4"
 rich-argparse = "^1.5.2"
 regex = "^2024.7.24"
-dotty-dict = "^1.3.1"
+dotty-dictionary = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
@@ -56,6 +56,8 @@ myst-parser = "^4.0.0"
 canonical-sphinx = "^0.1.0"
 sphinx-autodoc-typehints = "^2.3.0"
 sphinx-autoapi = "^3.3.1"
+types-paramiko = "^3.4.0.20240423"
+types-regex = "^2024.7.24.20240726"
 
 [tool.coverage.run]
 branch = true
