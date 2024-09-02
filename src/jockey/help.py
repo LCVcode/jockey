@@ -12,7 +12,8 @@ Filters have a three-part syntax:
 
 .B <OBJECT><FILTER><CONTENT>
 
-.OBJECT can be any supported Juju object types or their equivalent abbreviations (see \\fBSHORT NAMES\\fR, below). These values are identical to the \\fBOBJECT\\fR argument in the Jockey CLI.
+.OBJECT can be any supported Juju object types or their equivalent abbreviations (see \\fBSHORT NAMES\\fR, below).
+These values are identical to the \\fBOBJECT\\fR argument in the Jockey CLI.
 
 .FILTER specifies how objects should be filtered relative to \\fBCONTENT\\fR.
 These are the possible values for \\fBFILTER\\fR:

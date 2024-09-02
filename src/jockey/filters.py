@@ -16,6 +16,7 @@ REGEX_TIMEOUT = 100
 REGEX_FLAGS = regex.I | regex.U
 
 FilterAction = Callable[[C, C], bool]
+WrappedFilterAction = Callable[[Dict], bool]
 
 
 def log_filter_action(action: FilterAction) -> Callable:
@@ -133,6 +134,26 @@ def type_parser_for(t: Type[T]) -> Callable[[str], T]:
     return t
 
 
+def wrap_filter_action(mode: FilterMode, field: str, query: str) -> WrappedFilterAction:
+    action = mode.value.action
+
+    @wraps(action)
+    def wrapped_filter_action(item: Dict) -> bool:
+        value = dotty(item)[field]
+
+        if uses_typevar_params(action):
+            field_parser = type_parser_for(type(value))
+            logger.debug("Using field parser %r on %r for [b][blue]%s[/][/]", field_parser, field, mode)
+            parsed_query = field_parser(query)
+        else:
+            logger.debug("No need to parse field %r for [b][blue]%s[/][/]", field, mode)
+            parsed_query = query
+
+        return action(value, parsed_query)
+
+    return wrapped_filter_action
+
+
 def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
     for mode in FilterMode:
         (tokens, _, action) = astuple(mode.value)
@@ -148,21 +169,7 @@ def parse_filter_expression(expression: str) -> Callable[[Dict], bool]:
                     expression,
                 )
 
-                @wraps(action)
-                def _filter_action(item: Dict) -> bool:
-                    item_field = dotty(item)[field]
-
-                    if uses_typevar_params(action):
-                        field_parser = type_parser_for(type(item_field))
-                        logger.debug("Using field parser %r on %r for [b][blue]%s[/][/]", field_parser, field, mode)
-                        parsed_query = field_parser(query)
-                    else:
-                        logger.debug("No need to parse field %r for [b][blue]%s[/][/]", field, mode)
-                        parsed_query = query
-
-                    return action(item_field, parsed_query)
-
-                return _filter_action
+                return wrap_filter_action(mode, field, query)
 
     raise ValueError(f"Invalid filter expression '{expression}'")
 

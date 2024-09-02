@@ -16,7 +16,7 @@ try:
         f"[dark_cyan][link={__issues__}]{__issues__}[/][/]"
     )
 except ImportError as e:
-    logger.warning("Unable to import rich_argparse, reverting to argparse")
+    logger.warning("Unable to import rich_argparse: %s\nReverting to argparse", e.msg)
     from argparse import ArgumentDefaultsHelpFormatter
 
     __version__, __repository__, __issues__ = ("", "", "")

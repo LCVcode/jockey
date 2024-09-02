@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-from argparse import ArgumentParser, FileType, Namespace
 import logging
 import os
 import sys
@@ -28,7 +27,7 @@ if "SNAP" in os.environ:
     os.environ["PATH"] += ":" + os.path.join(os.environ["SNAP"], "usr", "juju", "bin")
 
 
-INFO_MESSAGE = f"""
+INFO_MESSAGE = """
 +----+
 |NOTE|
 +----+
