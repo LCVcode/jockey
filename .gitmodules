@@ -1,0 +1,3 @@
+[submodule "scripts/schemagen"]
+	path = scripts/schemagen
+	url = https://github.com/juju/schemagen.git
