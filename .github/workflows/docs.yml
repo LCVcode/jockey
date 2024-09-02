@@ -37,8 +37,7 @@ jobs:
         shell: bash
         run: |
           poetry shell
-          cd docs
-          make
+          make -C docs html
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
