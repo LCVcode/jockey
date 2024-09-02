@@ -154,6 +154,10 @@ jobs:
       matrix:
         python-version: [ '3.10', '3.11' ]
         os: [ ubuntu-latest, macos-latest, windows-latest ]
+        include:
+          - os: ubuntu-latest
+            python-version: '3.10'
+            report: true
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -177,7 +181,22 @@ jobs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root --all-extras --with dev
     - name: Run tests and collect coverage
-      run: poetry run pytest --cov=./src --cov-report=xml
+      shell: bash
+      run: poetry run pytest -v --cov=./src --cov-report=xml
+    - name: Render the report to the PR
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: test-report
+        recreate: true
+        path: .github-test-report.md
+      if: github.event_name == 'pull_request' && matrix.run_report == 'true'
+    - name: Render the report to the step summary
+      shell: bash
+      run: |
+        if [ -f .github-test-report.md ]; then
+          echo "# Test Report" >> "${GITHUB_STEP_SUMMARY}"
+          cat .github-test-report.md >> "${GITHUB_STEP_SUMMARY}"
+        fi
     - name: Determine if CODECOV_TOKEN is available
       id: has_codecov
       run: echo 'result=${{ secrets.CODECOV_TOKEN }}' >> $GITHUB_OUTPUT
@@ -187,7 +206,8 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true
         fail_ci_if_error: false
-      if: steps.has_codecov.outputs.result != 0
+      if: steps.has_codecov.outputs.result != 0 && matrix.run_report == 'true'
+    -
 
   build:
     name: Build on ${{ matrix.os }}

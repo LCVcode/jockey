@@ -48,6 +48,7 @@ coverage = "^7.0.0"
 pytest-cov = "^5.0.0"
 poetry-pyinstaller-plugin = "^1.1.15"
 pdoc = "^14.6.0"
+pytest-md-report = "^0.6.2"
 
 [tool.coverage.run]
 branch = true
@@ -64,6 +65,11 @@ pythonpath = "src"
 addopts = [
     "--import-mode=importlib",
 ]
+md_report = true
+md_report_verbose = 0
+md_report_color = "auto"
+md_report_flavor = "gfm"
+md_report_output = ".github-test-report.md"
 
 [tool.black]
 line-length = 120

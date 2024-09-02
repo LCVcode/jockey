@@ -8,6 +8,9 @@
 docs/
 man/
 
+### Testing
+.github-test-report.md
+
 ### JetBrains
 # Configuration
 .idea
