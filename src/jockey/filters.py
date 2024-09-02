@@ -83,7 +83,6 @@ def not_contains_filter(value: C_C, query: Any) -> bool:
 class FilterType:
     tokens: set[str]
     name: str
-    should_parse: bool
     action: FilterAction
 
 
