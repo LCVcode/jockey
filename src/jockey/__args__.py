@@ -2,12 +2,12 @@ from argparse import SUPPRESS, ArgumentParser, FileType, Namespace
 from logging import getLogger
 from typing import Optional, Sequence
 
-
-logger = getLogger(__name__)
-
 from rich_argparse import ArgumentDefaultsRichHelpFormatter as ArgumentDefaultsHelpFormatter
 
 from jockey import __issues__, __repository__, __version__
+
+
+logger = getLogger(__name__)
 
 
 epilog = (
