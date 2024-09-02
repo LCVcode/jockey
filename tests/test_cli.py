@@ -16,6 +16,9 @@ class Case(NamedTuple):
     want_output: str
     want_code: int
 
+    def __str__(self):
+        return " ".join(self.argv)
+
 
 CASES = [
     Case(
@@ -42,6 +45,18 @@ CASES = [
             "name%container",
         ],
         "10.118.249.130",
+        0,
+    ),
+    Case(
+        [
+            "-f",
+            K8S_SAMPLE_PATH,
+            "machine.hardware",
+        ],
+        """
+        arch=amd64 cores=2 mem=8192M virt-type=container
+        arch=amd64 cores=2 mem=8192M virt-type=container
+        """,
         0,
     ),
 ]
