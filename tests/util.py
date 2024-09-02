@@ -17,3 +17,9 @@ class StandardOutputCapture(list):
         self.extend(self._stringio.getvalue().splitlines())
         del self._stringio
         sys.stdout = self._stdout
+
+    def __eq__(self, other):
+        return list(self) == list(other)
+
+    def __ne__(self, other):
+        return list(self) != list(other)
