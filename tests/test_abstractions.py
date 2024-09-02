@@ -4,12 +4,10 @@ import pytest
 
 from jockey.abstractions import (
     E_C,
-    NE_C,
     O_C,
     OE_C,
     ContainsComparable,
     EqualityComparable,
-    NonEqualityComparable,
     OrderingComparable,
     OrderingEqualityComparable,
     uses_typevar_params,
@@ -40,6 +38,9 @@ class TestEqualityComparable:
         def __eq__(self, other: E_C) -> bool:
             return True
 
+        def __ne__(self, other: E_C) -> bool:
+            return True
+
     @pytest.fixture
     def equality_comparable(self):
         return self.DummyEqualityComparable()
@@ -47,18 +48,8 @@ class TestEqualityComparable:
     def test_eq_method(self, equality_comparable):
         assert equality_comparable.__eq__(1) == True
 
-
-class TestNonEqualityComparable:
-    class DummyNonEqualityComparable(NonEqualityComparable):
-        def __ne__(self, other: NE_C) -> bool:
-            return True
-
-    @pytest.fixture
-    def non_equality_comparable(self):
-        return self.DummyNonEqualityComparable()
-
-    def test_eq_method(self, non_equality_comparable):
-        assert non_equality_comparable.__ne__(1) == True
+    def test_ne_method(self, equality_comparable):
+        assert equality_comparable.__ne__(1) == True
 
 
 class TestOrderingEqualityComparable:
@@ -97,11 +88,6 @@ def test_type_for_equality_comparable(t: object):
 
 
 @pytest.mark.parametrize("t", [int(1), float(1.2), str("1"), bool(True), None, list(), dict()])
-def test_type_for_non_equality_comparable(t: object):
-    assert NonEqualityComparable.is_valid(t) == True
-
-
-@pytest.mark.parametrize("t", [int(1), float(1.2), str("1"), bool(True), None, list(), dict()])
 def test_type_for_ordering_equality_comparable(t: object):
     assert OrderingEqualityComparable.is_valid(t) == True
 
@@ -113,16 +99,16 @@ def test_type_for_contains_comparable(t: object):
 
 def uses_typevar_params_cases() -> List[Tuple[Callable[..., Any], bool]]:
 
-    def all_typevar_func(a: O_C, b: E_C, c: NE_C, d: OE_C) -> bool:
+    def all_typevar_func(a: O_C, b: E_C, c: OE_C) -> bool:
+        print(a, b, c)
+        return True
+
+    def some_typevar_func_1(a: O_C, b: E_C, c: OE_C, d: str) -> bool:
         print(a, b, c, d)
         return True
 
-    def some_typevar_func_1(a: O_C, b: E_C, c: NE_C, d: OE_C, e: str) -> bool:
-        print(a, b, c, d, e)
-        return True
-
-    def some_typevar_func_2(a: O_C, b: E_C, c: int, d: OE_C, e: NE_C) -> bool:
-        print(a, b, c, d, e)
+    def some_typevar_func_2(a: O_C, b: E_C, c: int, d: OE_C) -> bool:
+        print(a, b, c, d)
         return True
 
     def no_typevar_func(a: int, b: str, c: bool, d: None) -> bool:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-import logging
 from argparse import ArgumentParser, FileType, Namespace
+import logging
 import os
 import sys
 from typing import Dict, List, Optional, Sequence
@@ -36,6 +36,7 @@ Jockey is a work-in-progress currently only supports querying:
     units
     machines
 """
+
 
 def configure_logging(verbosity: int) -> None:
     levels = {

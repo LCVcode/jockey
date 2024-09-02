@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Iterable, List, Tuple, Type
 from dotty_dict import dotty
 from regex import regex
 
-from jockey.abstractions import C_C, E_C, NE_C, O_C, OE_C, C, T, uses_typevar_params
+from jockey.abstractions import C_C, E_C, O_C, OE_C, C, T, uses_typevar_params
 
 
 logger = getLogger(__name__)
@@ -35,7 +35,7 @@ def equals_filter(value: E_C, query: E_C) -> bool:
 
 
 @log_filter_action
-def not_equals_filter(value: NE_C, query: NE_C) -> bool:
+def not_equals_filter(value: E_C, query: E_C) -> bool:
     return value != query
 
 

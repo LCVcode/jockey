@@ -76,6 +76,14 @@ class OrderingComparable(Protocol):
     def __gt__(self, other: "O_C") -> bool:
         pass
 
+    @abstractmethod
+    def __le__(self, other: "O_C") -> bool:
+        pass
+
+    @abstractmethod
+    def __ge__(self, other: "O_C") -> bool:
+        pass
+
     @staticmethod
     def is_valid(obj: object) -> bool:
         """
@@ -99,6 +107,10 @@ class EqualityComparable(Protocol):
     def __eq__(self, other: "E_C") -> bool:
         pass
 
+    @abstractmethod
+    def __ne__(self, other: "E_C") -> bool:
+        pass
+
     @staticmethod
     def is_valid(obj: object) -> bool:
         """
@@ -112,30 +124,7 @@ class EqualityComparable(Protocol):
 
         .. versionadded:: 0.1.1
         """
-        return hasattr(obj, "__eq__") and callable(obj.__eq__)
-
-
-class NonEqualityComparable(Protocol):
-    """Protocol for annotating non-equality comparable types."""
-
-    @abstractmethod
-    def __ne__(self, other: "NE_C") -> bool:
-        pass
-
-    @staticmethod
-    def is_valid(obj: object) -> bool:
-        """
-        Check if the given object is valid for the `NonEqualityComparable` protocol.
-
-        :param object obj:
-            The object to be checked.
-
-        :returns: ``True`` if the object is a valid for the `ContainsComparable` protocol,
-            otherwise ``False``.
-
-        .. versionadded:: 0.1.1
-        """
-        return hasattr(obj, "__ne__") and callable(obj.__ne__)
+        return hasattr(obj, "__eq__") and hasattr(obj, "__ne__") and callable(obj.__eq__) and callable(obj.__ne__)
 
 
 class OrderingEqualityComparable(OrderingComparable, EqualityComparable, ABC):
@@ -186,16 +175,13 @@ O_C = TypeVar("O_C", bound=OrderingComparable)
 E_C = TypeVar("E_C", bound=EqualityComparable)
 """Equality comparable type abstraction."""
 
-NE_C = TypeVar("NE_C", bound=NonEqualityComparable)
-"""Non-equality comparable type abstraction."""
-
 OE_C = TypeVar("OE_C", bound=OrderingEqualityComparable)
 """Ordering and equality comparable type abstraction."""
 
 C_C = TypeVar("C_C", bound=ContainsComparable)
 """Contains comparable type abstraction."""
 
-C = Union[O_C, E_C, NE_C, OE_C, C_C]
+C = Union[O_C, E_C, OE_C, C_C]
 """Any comparable type abstraction."""
 
 T = TypeVar("T")
