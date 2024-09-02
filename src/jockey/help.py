@@ -47,4 +47,3 @@ get all \\fBhw-health\\fR units on hostname like "e01"
 get all non-LXD machines
 .RE
 """
-
