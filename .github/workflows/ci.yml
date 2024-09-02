@@ -207,7 +207,6 @@ jobs:
         verbose: true
         fail_ci_if_error: false
       if: steps.has_codecov.outputs.result != 0 && matrix.run_report == 'true'
-    -
 
   build:
     name: Build on ${{ matrix.os }}
