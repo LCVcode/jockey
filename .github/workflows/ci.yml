@@ -189,6 +189,7 @@ jobs:
         recreate: true
         path: .github-test-report.md
       if: github.event_name == 'pull_request' && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.10'
+      continue-on-error: true
     - name: Render the report to the step summary
       shell: bash
       run: |
