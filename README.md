@@ -1,8 +1,8 @@
 <div align="center">
 
-# Juju Jockey 
+# Juju Jockey
 
-*Juju objects at your fingertips 🫰* 
+*Juju objects at your fingertips 🫰*
 
 [![License][shield-license]][url-license]
 ![Python Version][shield-python]
@@ -24,7 +24,7 @@
 
 ## Overview
 
-Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.  It uses automatic caching of Juju's status in json format to enable faster parsing.  
+Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.  It uses automatic caching of Juju's status in json format to enable faster parsing.
 
 Jockey relies on this model of Juju objects and how they are related:
 ```mermaid
@@ -56,7 +56,7 @@ Filters follow a specific syntax and allow the user to limit Jockey's output to 
 ```
 <object><filter-code><content>
 ```
-Just like in the origial `jockey` command anatomy, `<object>` is any of the searchable Juju objects.  
+Just like in the origial `jockey` command anatomy, `<object>` is any of the searchable Juju objects.
 
 ## Getting Started
 ### Installing Dependencies

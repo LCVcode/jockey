@@ -252,4 +252,3 @@ jobs:
         with:
           name: snap
           path: ${{ steps.snapcraft.outputs.snap }}
-

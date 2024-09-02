@@ -13,10 +13,10 @@ JujuStatus = Dict[str, Any]
 
 
 class FilterMode(Enum):
-    EQUALS = "="
-    CONTAINS = "~"
-    NOT_EQUALS = "^="
-    NOT_CONTAINS = "^~"
+    EQUALS = '='
+    CONTAINS = '~'
+    NOT_EQUALS = '^='
+    NOT_CONTAINS = '^~'
 
 
 POSITIVE_MODES = (
@@ -32,20 +32,20 @@ NEGATIVE_MODES = (
 
 
 class ObjectType(Enum):
-    CHARM = ("charms", "charm", "c")
-    APP = ("applications", "app", "apps", "application", "a")
-    UNIT = ("units", "unit", "u")
-    MACHINE = ("machines", "machine", "m")
-    IP = ("ips", "address", "addresses", "ip", "i")
-    HOSTNAME = ("hostnames", "hostname", "host", "hosts", "h")
+    CHARM = ('charms', 'charm', 'c')
+    APP = ('applications', 'app', 'apps', 'application', 'a')
+    UNIT = ('units', 'unit', 'u')
+    MACHINE = ('machines', 'machine', 'm')
+    IP = ('ips', 'address', 'addresses', 'ip', 'i')
+    HOSTNAME = ('hostnames', 'hostname', 'host', 'hosts', 'h')
 
 
 def list_abbreviations() -> str:
     pad = 15
 
-    header = "OBJECT TYPE".ljust(pad, " ") + "SHORT NAMES"
-    lines = [obj_type.value[0].ljust(pad, " ") + ", ".join(obj_type.value[1:]) for obj_type in ObjectType]
-    return "\n".join([header, *lines])
+    header = 'OBJECT TYPE'.ljust(pad, ' ') + 'SHORT NAMES'
+    lines = [obj_type.value[0].ljust(pad, ' ') + ', '.join(obj_type.value[1:]) for obj_type in ObjectType]
+    return '\n'.join([header, *lines])
 
 
 @dataclass
@@ -109,27 +109,27 @@ def parse_filter_string(
         The constructed JockeyFilter object
     """
 
-    filter_code_pattern = re.compile(r"[=^~]+")
+    filter_code_pattern = re.compile(r'[=^~]+')
 
     filter_codes = filter_code_pattern.findall(filter_str)
-    assert len(filter_codes) == 1, "Incorrect number of filter codes detected."
+    assert len(filter_codes) == 1, 'Incorrect number of filter codes detected.'
 
     match = filter_code_pattern.search(filter_str)
-    assert match, "No filter code detected"
+    assert match, 'No filter code detected'
 
     object_type = convert_object_abbreviation(filter_str[: match.start()])
-    assert object_type, "Invalid object type detected in filter string."
+    assert object_type, 'Invalid object type detected in filter string.'
 
     filter_mode = next((mode for mode in FilterMode if mode.value == match.group()), None)
     assert filter_mode, f"Invalid filter mode detected: {match.group()}."
 
-    content = filter_str[match.end() :]
-    assert content, "Empty content detected in filter string."
+    content = filter_str[match.end():]
+    assert content, 'Empty content detected in filter string.'
 
-    char_blacklist = ("_", ":", ";", "\\", "\t", "\n", ",")
+    char_blacklist = ('_', ':', ';', '\\', '\t', '\n', ',')
     assert not any(
         char in char_blacklist for char in content
-    ), "Blacklisted characters detected in filter string content."
+    ), 'Blacklisted characters detected in filter string content.'
 
     return JockeyFilter(obj_type=object_type, mode=filter_mode, content=content)
 
@@ -216,23 +216,23 @@ def is_app_principal(status: JujuStatus, app_name: str) -> bool:
     is_principal (bool)
         Whether the indicated application is principal.
     """
-    return "subordinate-to" not in status["applications"][app_name]
+    return 'subordinate-to' not in status['applications'][app_name]
 
 
 def get_principal_unit_for_subordinate(status: JujuStatus, unit_name: str) -> str:
     """Get the name of a princpal unit for a given subordinate unit."""
-    for app, data in status["applications"].items():
+    for app, data in status['applications'].items():
 
         # Skip other subordinate applications
         if not is_app_principal(status, app):
             continue
 
         # Check if given unit is a subordinate of any of these units
-        for unit, unit_data in data["units"].items():
-            if unit_name in unit_data["subordinates"]:
+        for unit, unit_data in data['units'].items():
+            if unit_name in unit_data['subordinates']:
                 return unit
 
-    return ""
+    return ''
 
 
 def get_applications(status: JujuStatus) -> Generator[str, None, None]:
@@ -249,7 +249,7 @@ def get_applications(status: JujuStatus) -> Generator[str, None, None]:
     application_names (Generator[str])
         All application names, in no particular order, as a generator.
     """
-    for app in status["applications"]:
+    for app in status['applications']:
         yield app
 
 
@@ -268,7 +268,7 @@ def get_charms(status: JujuStatus) -> Generator[str, None, None]:
         All charms names, in no particular order, as a generator.
     """
     for app in get_applications(status):
-        yield status["applications"][app]["charm"]
+        yield status['applications'][app]['charm']
 
 
 def get_units(status: JujuStatus) -> Generator[str, None, None]:
@@ -292,19 +292,19 @@ def get_units(status: JujuStatus) -> Generator[str, None, None]:
             continue
 
         # Skip applications that have no deployed units
-        if "units" not in status["applications"][app]:
+        if 'units' not in status['applications'][app]:
             continue
 
-        for unit_name, data in status["applications"][app]["units"].items():
+        for unit_name, data in status['applications'][app]['units'].items():
             # Generate principal unit
             yield unit_name
 
             # Check if subordinate units exist
-            if "subordinates" not in data:
+            if 'subordinates' not in data:
                 continue
 
             # Generate subordinate units
-            for subordinate_unit_name in data["subordinates"]:
+            for subordinate_unit_name in data['subordinates']:
                 yield subordinate_unit_name
 
 
@@ -322,13 +322,13 @@ def get_machines(status: JujuStatus) -> Generator[str, None, None]:
     machine_ids (Generator[str])
         All machines, in no particular order, as a generator.
     """
-    for id in status["machines"].keys():
+    for id in status['machines'].keys():
         yield id
 
-        if "containers" not in status["machines"][id]:
+        if 'containers' not in status['machines'][id]:
             continue
 
-        for container in status["machines"][id]["containers"]:
+        for container in status['machines'][id]['containers']:
             yield container
 
 
@@ -346,8 +346,8 @@ def get_hostnames(status: JujuStatus) -> Generator[str, None, None]:
     hostnames (Generator[str])
         All hostnames, in no particular order, as a generator.
     """
-    for machine in status["machines"]:
-        yield machine["hostname"]
+    for machine in status['machines']:
+        yield machine['hostname']
 
 
 def get_ips(status: JujuStatus) -> Generator[str, None, None]:
@@ -364,8 +364,8 @@ def get_ips(status: JujuStatus) -> Generator[str, None, None]:
     ips (Generator[str])
         All ips, in no particular order, as a generator.
     """
-    for machine in status["machines"]:
-        for address in machine["ip-addresses"]:
+    for machine in status['machines']:
+        for address in machine['ip-addresses']:
             yield address
 
 
@@ -387,8 +387,8 @@ def charm_to_applications(status: JujuStatus, charm_name: str) -> Generator[str,
     applications (Generator[str])
         All applications that match the given charm name.
     """
-    for application in status["applications"]:
-        if application["charm"] == charm_name:
+    for application in status['applications']:
+        if application['charm'] == charm_name:
             yield application
 
 
@@ -409,7 +409,7 @@ def application_to_charm(status: JujuStatus, app_name: str) -> Optional[str]:
         The name of the charm, if the indicated application exists.
     """
     try:
-        return status["applications"][app_name]["charm"]
+        return status['applications'][app_name]['charm']
     except KeyError:
         return None
 
@@ -431,12 +431,12 @@ def application_to_units(status: JujuStatus, app_name: str) -> Generator[str, No
     units (Generator[str])
         All units of the given application.
     """
-    for application, _ in status["applications"].items():
+    for application, _ in status['applications'].items():
 
         if application != app_name:
             continue
 
-        for unit_name in application["units"].keys():
+        for unit_name in application['units'].keys():
             yield unit_name
 
 
@@ -457,9 +457,9 @@ def unit_to_application(status: JujuStatus, unit_name: str) -> Optional[str]:
     application (str) [optional]
         The name of the corresponding application.
     """
-    app_name = unit_name.split("/")[0]
+    app_name = unit_name.split('/')[0]
 
-    if app_name in status["applications"]:
+    if app_name in status['applications']:
         return app_name
 
     return None
@@ -482,18 +482,18 @@ def subordinate_unit_to_principal_unit(status: JujuStatus, unit_name: str) -> st
     """
     app = unit_to_application(status, unit_name)
     assert app, f"No application found for unit {unit_name}"
-    app_data = status["applications"]
+    app_data = status['applications']
 
     if is_app_principal(status, app):
         return unit_name
 
-    for p_app in app_data[app]["subordinate-to"]:
+    for p_app in app_data[app]['subordinate-to']:
 
         if not is_app_principal(status, p_app):
             continue
 
-        for p_unit in app_data[p_app]["units"]:
-            if unit_name in app_data[p_app]["units"][p_unit]["subordinates"]:
+        for p_unit in app_data[p_app]['units']:
+            if unit_name in app_data[p_app]['units'][p_unit]['subordinates']:
                 return p_unit
 
     raise Exception(f"No principal unit detected for unit {unit_name}")
@@ -519,7 +519,7 @@ def unit_to_machine(status: JujuStatus, unit_name: str) -> Optional[str]:
     principal_unit_name = subordinate_unit_to_principal_unit(status, unit_name)
     app = unit_to_application(status, principal_unit_name)
 
-    return status["applications"][app]["units"][principal_unit_name]["machine"]
+    return status['applications'][app]['units'][principal_unit_name]['machine']
 
 
 def machine_to_units(status: JujuStatus, machine: str) -> Generator[str, None, None]:
@@ -551,10 +551,10 @@ def machine_to_units(status: JujuStatus, machine: str) -> Generator[str, None, N
         if unit_to_machine(status, unit) == machine:
             yield unit
 
-            if "subordinates" not in status["applications"][app]["units"][unit]:
+            if 'subordinates' not in status['applications'][app]['units'][unit]:
                 continue
 
-            for subordinate_unit in status["applications"][app]["units"][unit]["subordinates"]:
+            for subordinate_unit in status['applications'][app]['units'][unit]['subordinates']:
                 yield subordinate_unit
 
 
@@ -574,12 +574,12 @@ def machine_to_ips(status: JujuStatus, machine: str) -> Generator[str, None, Non
     addresses (Generator[str])
         The IP addresses of the machine.
     """
-    if "lxd" in machine.lower():
-        base_machine = status["machines"][machine.split("/")[0]]
-        for ip in base_machine["containers"][machine]["ip-addresses"]:
+    if 'lxd' in machine.lower():
+        base_machine = status['machines'][machine.split('/')[0]]
+        for ip in base_machine['containers'][machine]['ip-addresses']:
             yield ip
     else:
-        for ip in status["machines"][machine]["ip-addresses"]:
+        for ip in status['machines'][machine]['ip-addresses']:
             yield ip
 
 
@@ -599,8 +599,8 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
     machine ID (str)
         ID of the machine owning the given IP.
     """
-    for machine in status["machines"]:
-        if ip in status["machines"][machine]["ip-addresses"]:
+    for machine in status['machines']:
+        if ip in status['machines'][machine]['ip-addresses']:
             return machine
 
     raise Exception(f"No machine found with IP {ip}")
@@ -622,10 +622,10 @@ def machine_to_hostname(status: JujuStatus, machine: str) -> str:
     hostname (str)
         The machine's hostname.
     """
-    if "lxd" in machine:
-        physical_machine, _, container_id = machine.split("/")
-        return status["machines"][physical_machine]["containers"][machine]["hostname"]
-    return status["machines"][machine]["hostname"]
+    if 'lxd' in machine:
+        physical_machine, _, container_id = machine.split('/')
+        return status['machines'][physical_machine]['containers'][machine]['hostname']
+    return status['machines'][machine]['hostname']
 
 
 def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
@@ -645,7 +645,7 @@ def hostname_to_machine(status: JujuStatus, hostname: str) -> str:
         The ID of the machine with the given hostname.
     """
     for machine in get_machines(status):
-        if status["machines"][machine]["hostname"] == hostname:
+        if status['machines'][machine]['hostname'] == hostname:
             return machine
 
     raise Exception(f"No machine found for hostname {hostname}")

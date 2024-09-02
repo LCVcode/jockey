@@ -22,9 +22,9 @@ assignees: ''
 *(Optional) Add screenshots or logs to help explain the issue.*
 
 ## Environment
-- **Operating system:**  
-- **Python version:** 
-- **Juju version:**  
+- **Operating system:**
+- **Python version:**
+- **Juju version:**
 
 ## Additional Context
 *(Optional) Any other details?*

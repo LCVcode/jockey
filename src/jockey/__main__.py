@@ -18,8 +18,8 @@ from jockey.core import (
 from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
 
 
-if "SNAP" in os.environ:
-    os.environ["PATH"] += ":" + os.path.join(os.environ["SNAP"], "usr", "juju", "bin")
+if 'SNAP' in os.environ:
+    os.environ['PATH'] += ':' + os.path.join(os.environ['SNAP'], 'usr', 'juju', 'bin')
 
 
 INFO_MESSAGE = f"""
@@ -85,31 +85,31 @@ Jockey object name abbreviations:
 
 
 def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
-    parser = ArgumentParser(prog="jockey", description=__doc__, epilog=f"Version {version}")
+    parser = ArgumentParser(prog='jockey', description=__doc__, epilog=f"Version {version}")
 
     # Add cache refresh flag
-    parser.add_argument("--refresh", action="store_true", help="Force a cache update")
+    parser.add_argument('--refresh', action='store_true', help='Force a cache update')
 
     # Add object type argument
     parser.add_argument(
-        "object",
+        'object',
         help="Choose an object type to query or 'info'",
     )
 
     # Add filters as positional arguments
     parser.add_argument(
-        "filters",
+        'filters',
         type=parse_filter_string,
-        nargs="*",
-        help="Specify filters for your query.",
+        nargs='*',
+        help='Specify filters for your query.',
     )
 
     # Optional import from a json file
     parser.add_argument(
-        "-f",
-        "--file",
-        type=FileType("r"),
-        help="Use a local Juju status JSON file",
+        '-f',
+        '--file',
+        type=FileType('r'),
+        help='Use a local Juju status JSON file',
     )
 
     return parser.parse_args(argv)
@@ -122,7 +122,7 @@ def main(argv: Optional[Sequence[str]] = None):
     args = parse_args(argv)
 
     # Check if 'help' was requested
-    if args.object == "info":
+    if args.object == 'info':
         print(INFO_MESSAGE)
         return
 
@@ -147,8 +147,8 @@ def main(argv: Optional[Sequence[str]] = None):
 
     action = RETRIEVAL_MAP[obj_type]
     assert action, f"Parsing {obj_type} is not implemented."
-    print(" ".join(action(status, args.filters)))
+    print(' '.join(action(status, args.filters)))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main(sys.argv[1:])
