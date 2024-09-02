@@ -188,6 +188,14 @@ autoclass_content = "both"
 set_type_checking_flag = true
 autoapi_dirs = ["../src"]
 autoapi_type = "python"
+autoapi_typehints = "both"
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

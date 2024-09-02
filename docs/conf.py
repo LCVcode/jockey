@@ -107,4 +107,5 @@ html_theme_options = {
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/{.major}'.format(sys.version_info), None),
+    'dotty_dict': ('https://dotty-dict.readthedocs.io/en/latest/', None),
 }
