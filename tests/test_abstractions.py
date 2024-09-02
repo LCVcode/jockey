@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Any, Callable, List, Tuple
 
 import pytest
@@ -20,6 +21,12 @@ class TestOrderingComparable:
             return True
 
         def __gt__(self: O_C, other) -> bool:
+            return True
+
+        def __le__(self, other: O_C) -> bool:
+            return True
+
+        def __ge__(self: O_C, other) -> bool:
             return True
 
     @pytest.fixture
@@ -53,14 +60,23 @@ class TestEqualityComparable:
 
 
 class TestOrderingEqualityComparable:
-    class DummyOrderingEqualityComparable(OrderingEqualityComparable):
+    class DummyOrderingEqualityComparable(OrderingEqualityComparable, ABC):
         def __lt__(self, other: O_C) -> bool:
             return True
 
         def __gt__(self, other: O_C) -> bool:
             return True
 
+        def __le__(self, other: O_C) -> bool:
+            return True
+
+        def __ge__(self: O_C, other) -> bool:
+            return True
+
         def __eq__(self, other: E_C) -> bool:
+            return True
+
+        def __ne__(self, other: E_C) -> bool:
             return True
 
     @pytest.fixture
