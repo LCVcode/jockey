@@ -48,6 +48,3 @@ get all non-LXD machines
 .RE
 """
 
-
-def help_roff() -> str:
-    TEMPLATE_ROFF.format()
