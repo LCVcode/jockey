@@ -59,7 +59,7 @@ def all_application_names(status: FullStatus) -> List[str]:
 
 def is_subordinate_application(status: FullStatus, app_name: str) -> bool:
     """
-    Check if an application is subordinate to another.
+    Checks if an application is subordinate to another.
 
     :param status: The :class:`full_status.FullStatus` data structure.
     :param app_name: The name of the application.
@@ -70,7 +70,7 @@ def is_subordinate_application(status: FullStatus, app_name: str) -> bool:
 
 def is_principal_application(status: FullStatus, app_name: str) -> bool:
     """
-    Check if an application is principal to another.
+    Checks if an application is principal to another.
 
     :param status: The :class:`full_status.FullStatus` data structure.
     :param app_name: The name of the application.
@@ -81,7 +81,7 @@ def is_principal_application(status: FullStatus, app_name: str) -> bool:
 
 def application_has_units(status: FullStatus, app_name: str) -> bool:
     """
-    Check if an application has any active units.
+    Checks if an application has any active units.
 
     :param status: The :class:`full_status.FullStatus` data structure.
     :param app_name: The name of the application.
@@ -123,7 +123,7 @@ def application_unit_names(status: FullStatus, app_name: str) -> List[str]:
 
 def unit_has_subordinates(status: FullStatus, app_name: str, unit_name: str) -> bool:
     """
-    Check if a unit has subordinates.
+    Checks if a unit has subordinates.
 
     :param status: The :class:`full_status.FullStatus` data structure.
     :param app_name: The name of the application.
@@ -182,7 +182,7 @@ def all_machines(status: FullStatus) -> List[MachineStatus]:
 
 def is_container(machine_id: str) -> bool:
     """
-    Check if a machine is a container.
+    Checks if a machine is a container.
 
     :param machine_id: The machine ID.
     :return: ``True`` if the machine is a container, ``False`` otherwise.
@@ -192,7 +192,7 @@ def is_container(machine_id: str) -> bool:
 
 def lookup_machine(status: FullStatus, machine_id: str) -> MachineStatus:
     """
-    Lookup a machine or container in the Juju status.
+    Looks up a machine or container in the Juju status.
 
     :param status: The :class:`full_status.FullStatus` data structure.
     :param machine_id: The ID of the machine or container to find.
