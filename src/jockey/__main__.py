@@ -71,7 +71,7 @@ def configure_logging(verbosity: int) -> None:
     logger.debug("Traceback handler installed.")
 
 
-def main(argv: Optional[Sequence[str]] = None):
+def main(argv: Optional[Sequence[str]] = None) -> int:
     # parse command-line arguments and configure logging
     if argv is None:
         argv = sys.argv[1:]
@@ -120,7 +120,7 @@ def main(argv: Optional[Sequence[str]] = None):
             status = cloud.juju_status
         except CloudCredentialsException as e:
             print(Panel(e.advice_markup(), title="[red]" + e.message), file=sys.stderr)
-            exit(126)
+            return 126
         finally:
             cloud.close()
 
@@ -150,6 +150,8 @@ def main(argv: Optional[Sequence[str]] = None):
         else:
             print(dotty(item)[obj_field])
 
+    return 0
+
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    exit(main(sys.argv[1:]))
