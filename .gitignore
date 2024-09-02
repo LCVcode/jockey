@@ -2,6 +2,7 @@
 # Kitchen drawer (?)
 *.json
 *.sh
+!tests/samples/*
 
 ### Documentation
 docs/
