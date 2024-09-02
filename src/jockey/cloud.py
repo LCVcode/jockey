@@ -4,7 +4,7 @@ import logging
 import os
 from shlex import quote as shell_quote
 from textwrap import dedent
-from typing import Any, Dict, Generator, List, NamedTuple, Optional, Union
+from typing import Any, Dict, NamedTuple, Optional, Union
 
 from fabric import Config as FabricConfig
 from fabric import Connection
