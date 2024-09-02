@@ -11,11 +11,44 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../src'))
 
-from sphinx_pyproject import SphinxConfig
-
-config = SphinxConfig("../pyproject.toml", globalns=globals())
-
-
+github_username = "LCVcode"
+github_repository = "jockey"
+author = "Connor Chamberlain"
+project = "Juju Jockey"
+copyright = "2024 Connor Chamberlain"
+language = "en"
+package_root = "src/jockey"
+extensions = [
+    "sphinx.ext.doctest",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.todo",
+    "autoapi.extension",
+    "myst_parser",
+    "canonical_sphinx"
+]
+templates_path = [ "_templates",]
+html_static_path = [ "_static",]
+source_suffix = ".rst"
+master_doc = "index"
+html_theme = "canonical_sphinx"
+add_module_names = True
+hide_none_rtype = True
+all_typevars = True
+autosummary_generate = True
+overloads_location = "bottom"
+autoclass_content = "both"
+set_type_checking_flag = True
+autoapi_dirs = ["../src"]
+autoapi_type = "python"
+autoapi_typehints = "both"
+autoapi_options = [
+    "members",
+    "undoc-members",
+    "show-inheritance",
+    "show-module-summary",
+    "imported-members",
+]
 
 html_context = {
     # Change to the link to the website of your product (without "https://")
