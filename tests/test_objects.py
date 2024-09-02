@@ -7,10 +7,7 @@ from orjson import loads as json_loads
 import pytest
 
 from jockey.objects import FullStatus, Object
-
-
-TESTS_DIR = os.path.dirname(os.path.realpath(__file__))
-SAMPLES_DIR = os.path.join(TESTS_DIR, "samples")
+from tests.util import SAMPLES_DIR
 
 
 @pytest.mark.parametrize(
