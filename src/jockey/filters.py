@@ -2,9 +2,9 @@ from dataclasses import astuple, dataclass
 from enum import Enum
 from functools import wraps
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, Type
+from typing import Any, Callable, Dict, Iterable
 
-from dotty_dict import dotty
+from dotty_dictionary import dotty  # type: ignore[import-untyped]
 from regex import regex
 
 from jockey.abstractions import C_C, E_C, O_C, OE_C, C, T, uses_typevar_params
@@ -261,11 +261,11 @@ def bool_type_parser(value: str) -> bool:
     return value.lower() in {"true", "t", "1", "yes", "y"}
 
 
-TYPE_PARSERS: Dict[Type[T], Callable[[str], T]] = {bool: bool_type_parser}
+TYPE_PARSERS: dict[type, Callable[[str], Any]] = {bool: bool_type_parser}
 """An override map between types and their corresponding parser functions."""
 
 
-def type_parser_for(t: Type[T]) -> Callable[[str], T]:
+def type_parser_for(t: type[T]) -> Callable[[str], T]:
     """
     Returns the appropriate parser function for the given type.
 
