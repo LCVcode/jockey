@@ -87,9 +87,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # check if OBJECT is requesting the informational message
     # TODO: BRING BACK INFO MESSAGE
 
-    # parse the OBJECT expression into its components (object, field)
-    obj, obj_field = Object.parse(args.object)
-    logger.debug("Parsed object expression %r into %r with field %r", obj_expression, obj, obj_field)
+    # try parsing the OBJECT expression into its components (object, field)
+    try:
+        obj, obj_field = Object.parse(args.object)
+        logger.debug("Parsed object expression %r into %r with field %r", obj_expression, obj, obj_field)
+    except ValueError as e:
+        logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
+        return 2  # usage error
 
     # obtain the Juju status
     if "file" in args:  # obtain the Juju status from the provided file
