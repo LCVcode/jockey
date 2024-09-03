@@ -83,6 +83,15 @@ class Object(Enum):
         return set(token for obj in Object for token in obj.value.names)
 
     @staticmethod
+    def names() -> set[str]:
+        """
+        Retrieves all names associated with the defined Juju object types.
+
+        :return: A set of all names associated with the Juju object types.
+        """
+        return set(str(obj) for obj in Object)
+
+    @staticmethod
     def from_str(obj_name: str) -> "Object":
         """
         Converts a string representation of a Juju object type into its corresponding :class:`Object`.
