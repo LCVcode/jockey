@@ -133,10 +133,10 @@ We lean on the GitHub pull-request workflow. If you're unfamiliar with this, ple
 
 The best pull requests clearly describe their purpose and changes. New tests, especially in the presence of significant changes or feature implementations, go a long way toward ensuring enduring stability for Jockey.
 
-Once you're ready to submit your changes, [open a pull request on the repository][new PR] against the `master` branch. The maintainers will review your changes.
+Once you're ready to submit your changes, [open a pull request on the repository][new PR] against the `master` branch. The [maintainers](MAINTAINERS.md) will review your changes.
 
 ## Maintainer guidelines
-Maintainers should follow these rules when handling pull requests:
+[Maintainers](MAINTAINERS.md) should follow these rules when handling pull requests:
 
 - Wait for tests to finish and pass before merging PRs.
 - Use the "Squash and Merge" strategy to merge PRs.
