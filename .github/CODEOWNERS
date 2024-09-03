@@ -1,0 +1,10 @@
+# CODEOWNERS
+# Configure pull request (PR) reviewers for different areas of the repository.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Connor is the overall reviewer for PRs.
+* @LCVcode
+
+# Add John to PRs against GitHub workflows or documentation.
+.github/ @johnlettman
+docs/ @johnlettman
