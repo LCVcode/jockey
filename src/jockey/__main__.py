@@ -1,154 +1,161 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-from argparse import ArgumentParser, FileType, Namespace
+import logging
 import os
 import sys
-from typing import Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
-from jockey.__init__ import __version__ as version
-from jockey.core import (
-    FilterMode,
-    ObjectType,
-    convert_object_abbreviation,
-    filter_machines,
-    filter_units,
-    list_abbreviations,
-    parse_filter_string,
-)
-from jockey.status_keeper import cache_juju_status, read_local_juju_status_file, retrieve_juju_cache
+from dotty_dictionary import dotty  # type: ignore[import-untyped]
+from orjson import loads as json_loads
+from rich import print
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.panel import Panel
+from rich.traceback import install as install_traceback
 
-
-if 'SNAP' in os.environ:
-    os.environ['PATH'] += ':' + os.path.join(os.environ['SNAP'], 'usr', 'juju', 'bin')
+from jockey.__args__ import parse_args
+from jockey.cache import FileCache
+from jockey.cloud import Cloud, CloudCredentialsException
+from jockey.filters import parse_filter_expressions
+from jockey.objects import Object
 
 
-INFO_MESSAGE = f"""
+logger = logging.getLogger(__name__)
+
+DEBUG_ENV_VAR = "JOCKEY_DEBUG"
+if "SNAP" in os.environ:
+    os.environ["PATH"] += ":" + os.path.join(os.environ["SNAP"], "usr", "juju", "bin")
+
+
+INFO_MESSAGE = """
 +----+
 |NOTE|
 +----+
 Jockey is a work-in-progress currently only supports querying:
     units
     machines
-
-
-+-------+
-|FILTERS|
-+-------+
-Filters have a three-part syntax:
-    <object type><filter code><content>
-
-<object type> can be any supported Juju object types or their equivalent
-abbreviations (see "SHORT NAMES", below).  These values are identical to the
-`object` argument in the Jockey CLI.
-
-<filter code> specifies how objects should be filtered relative to <content>
-There are four possible values for <filter code>:
-    {FilterMode.EQUALS.value.ljust(3)}: matches
-    {FilterMode.NOT_EQUALS.value.ljust(3)}: does not match
-    {FilterMode.CONTAINS.value.ljust(3)}: contains
-    {FilterMode.NOT_CONTAINS.value.ljust(3)}: does not contain
-Exactly one <filter code> must be given per filter.
-
-<content> is a given string that will be used to filter Juju object names.
-
-
-+-----------+
-|SHORT NAMES|
-+-----------+
-Jockey object name abbreviations:
-
-{list_abbreviations()}
-
-
-+---------------+
-|EXAMPLE QUERIES|
-+---------------+
- Get all units:
-     jockey units
-
- Get all nova-compute units:
-     jockey units application=nova-compute
-
- Get the hw-health unit on a machine with a partial hostname "e01":
-    jockey u a=hw-health host~e01
-
- Get all non-lxd machines:
-     jockey m m^~lxd
-
-
-+-------------------+
-|OPERATIONS EXAMPLES|
-+-------------------+
- Run a 'show-sel' action a machine with a partial host name 'ts1363co':
-     juju run-action --wait $(jockey u a~hw-hea m~ts1363co) show-sel
 """
 
 
-def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
-    parser = ArgumentParser(prog='jockey', description=__doc__, epilog=f"Version {version}")
+def configure_logging(verbosity: int) -> None:
+    levels = {
+        0: logging.ERROR,
+        1: logging.WARN,
+        2: logging.INFO,
+        3: logging.DEBUG,
+    }
 
-    # Add cache refresh flag
-    parser.add_argument('--refresh', action='store_true', help='Force a cache update')
-
-    # Add object type argument
-    parser.add_argument(
-        'object',
-        help="Choose an object type to query or 'info'",
+    level = levels[verbosity % len(levels)]
+    level_name = logging.getLevelName(level)
+    handler = RichHandler(
+        console=Console(stderr=True, markup=True),
+        rich_tracebacks=(DEBUG_ENV_VAR in os.environ),
+        tracebacks_show_locals=(DEBUG_ENV_VAR in os.environ),
+        tracebacks_suppress=["paramiko", "invoke", "fabric"],
+        locals_max_length=4,
+        markup=True,
     )
 
-    # Add filters as positional arguments
-    parser.add_argument(
-        'filters',
-        type=parse_filter_string,
-        nargs='*',
-        help='Specify filters for your query.',
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[handler],
+    )
+    logger.debug(
+        "Logger configured with level %s",
+        level_name,
     )
 
-    # Optional import from a json file
-    parser.add_argument(
-        '-f',
-        '--file',
-        type=FileType('r'),
-        help='Use a local Juju status JSON file',
-    )
-
-    return parser.parse_args(argv)
+    install_traceback(show_locals=True)
+    logger.debug("Traceback handler installed.")
 
 
-def main(argv: Optional[Sequence[str]] = None):
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    # parse command-line arguments and configure logging
     if argv is None:
         argv = sys.argv[1:]
 
     args = parse_args(argv)
+    verbosity = args.verbose if "verbose" in args else 0
+    configure_logging(verbosity)
+    logger.debug("Parsed command-line arguments:\n%r", args)
 
-    # Check if 'help' was requested
-    if args.object == 'info':
-        print(INFO_MESSAGE)
-        return
+    # obtain OBJECT expression
+    obj_expression = args.object
 
-    # Perform any requested cache refresh
-    if args.refresh:
-        cache_juju_status()
+    # check if OBJECT is requesting the informational message
+    # TODO: BRING BACK INFO MESSAGE
 
-    # Get status
-    status = retrieve_juju_cache() if not args.file else read_local_juju_status_file(args.file)
+    # try parsing the OBJECT expression into its components (object, field)
+    try:
+        obj, obj_field = Object.parse(args.object)
+        logger.debug("Parsed object expression %r into %r with field %r", obj_expression, obj, obj_field)
+    except ValueError as e:
+        logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
+        return 2  # usage error
 
-    RETRIEVAL_MAP = {
-        ObjectType.CHARM: None,
-        ObjectType.APP: None,
-        ObjectType.UNIT: filter_units,
-        ObjectType.MACHINE: filter_machines,
-        ObjectType.IP: None,
-        ObjectType.HOSTNAME: None,
-    }
+    # obtain the Juju status
+    if "file" in args:  # obtain the Juju status from the provided file
+        status_file = args.file
+        status = json_loads(status_file.read())
+        status_file.close()
+    else:  # obtain the Juju status from the cloud
+        # configure the file cache
+        cache_dir = args.cache if "cache" in args else None
+        cache_age = args.cache_age if "cache_age" in args else None
+        cache_refresh = args.refresh
+        cache = FileCache(cache_dir, cache_age)
+        if cache_refresh:
+            cache.clear()
+            logger.info("Cleared file cache at %s", args.cache)
 
-    obj_type = convert_object_abbreviation(args.object)
-    assert obj_type, f"'{args.object}' is not a valid object type."
+        # obtain cloud configuration
+        cloud_host = args.host if "host" in args else None
+        cloud_user = args.user if "user" in args else None
+        cloud_doas = args.sudo if "sudo" in args else None
+        cloud_timeout = args.timeout if "timeout" in args else None
+        cloud_juju = args.juju if "juju" in args else None
 
-    action = RETRIEVAL_MAP[obj_type]
-    assert action, f"Parsing {obj_type} is not implemented."
-    print(' '.join(action(status, args.filters)))
+        # connect to the cloud and get the Juju status
+        cloud = Cloud(host=cloud_host, user=cloud_user, doas=cloud_doas, timeout=cloud_timeout, juju=cloud_juju)
+
+        try:
+            status = cloud.juju_status
+        except CloudCredentialsException as e:
+            print(Panel(e.advice_markup(), title="[red]" + e.message), file=sys.stderr)
+            return 126
+        finally:
+            cloud.close()
+
+    # select OBJECTs from the Juju status
+    selection: List[Dict] = []
+    if "filters" not in args:  # select all OBJECTs in the absence of filters
+        selection = obj.collect(status)
+    else:  # apply filtering to OBJECTs
+        # parse the filters into actions
+        actions = parse_filter_expressions(args.filters)
+
+        # collect the OBJECTs
+        collection = obj.collect(status)
+
+        # iterate over each OBJECT in the collection,
+        # check all filters against it,
+        # and add it to our selection if they all pass
+        for item in collection:
+            if all([action(item) for action in actions]):
+                selection.append(item)
+
+    for item in selection:
+        if obj_field is None:
+            print(item["name"])
+        elif obj_field == "":
+            print(item)
+        else:
+            print(dotty(item)[obj_field])
+
+    return 0
 
 
-if __name__ == '__main__':
-    main(sys.argv[1:])
+if __name__ == "__main__":
+    exit(main(sys.argv[1:]))

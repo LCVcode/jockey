@@ -2,9 +2,10 @@
 # Kitchen drawer (?)
 *.json
 *.sh
+!tests/samples/*
 
-### Documentation
-docs/
+### Testing
+.github-test-report.md
 
 ### JetBrains
 # Configuration
@@ -29,6 +30,8 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+setup.py
+__pycache__/
 
 # Installer logs
 pip-log.txt

@@ -1,159 +1,280 @@
+from typing import Callable, Type
+from unittest import TestCase
+from unittest.mock import Mock, patch
+
 import pytest
 
-from jockey.core import FilterMode, JockeyFilter, ObjectType, check_filter_match, parse_filter_string
+from jockey.abstractions import T
+from jockey.filters import (
+    bool_type_parser,
+    contains_filter,
+    equals_filter,
+    greater_than_filter,
+    greater_than_or_equals_filter,
+    less_than_filter,
+    less_than_or_equals_filter,
+    log_filter_action,
+    not_contains_filter,
+    not_equals_filter,
+    not_regex_filter,
+    regex_filter,
+    type_parser_for,
+)
 
 
-def test_filter_mode_retrieval():
-    """Test that FilterModes are retrieved correctly."""
+class TestLogFilterActionDecorator(TestCase):
 
-    assert next(mode for mode in FilterMode if mode.value == '~') == FilterMode.CONTAINS
-    assert next(mode for mode in FilterMode if mode.value == '^~') == FilterMode.NOT_CONTAINS
-    assert next(mode for mode in FilterMode if mode.value == '=') == FilterMode.EQUALS
-    assert next(mode for mode in FilterMode if mode.value == '^=') == FilterMode.NOT_EQUALS
+    def test_action_function_is_called(self):
+        # create mock action function
+        mock_action = Mock()
+        mock_action.__name__ = "test_filter"
 
+        # wrap the action function
+        wrapped_action = log_filter_action(mock_action)
 
-def test_valid_filters():
-    """Test that valid filter strings work."""
+        # call the newly wrapped action
+        wrapped_action("value", "query")
 
-    valid_filters = (
-        ('u~hw-health', ObjectType.UNIT, FilterMode.CONTAINS, 'hw-health'),
-        (
-            'app^=nrpe-host',
-            ObjectType.APP,
-            FilterMode.NOT_EQUALS,
-            'nrpe-host',
-        ),
-        ('charm^~nova', ObjectType.CHARM, FilterMode.NOT_CONTAINS, 'nova'),
-        ('ip=127.0.0.1', ObjectType.IP, FilterMode.EQUALS, '127.0.0.1'),
-    )
-    valid_filters = (
-        (
-            'app^=nrpe-host',
-            ObjectType.APP,
-            FilterMode.NOT_EQUALS,
-            'nrpe-host',
-        ),
-    )
-    for filter_str, object_type, mode, content in valid_filters:
-        assert parse_filter_string(filter_str) == JockeyFilter(
-            object_type,
-            mode,
-            content,
-        )
+        # assert the mock action was called
+        mock_action.assert_called_once_with("value", "query")
 
+    @patch("jockey.filters.logger")
+    def test_logging(self, mock_logger):
+        # create mock action function
+        mock_action = Mock(return_value=True)
+        mock_action.__name__ = "test_filter"
 
-def test_invalid_object_types():
-    """Test filter strings that have bad object types."""
+        # wrap the action function
+        wrapped_action = log_filter_action(mock_action)
 
-    bad_filters = ('unite=unit-name', 'appp^~cool-app')
-    with pytest.raises(AssertionError):
-        for filter_str in bad_filters:
-            parse_filter_string(filter_str)
+        # call the wrapped action
+        wrapped_action("value", "query")
+
+        # assert the action was logged
+        mock_logger.debug.assert_called_once_with("%r [b][blue]%s[/][/] %r ? %r", "value", "test", "query", True)
+
+    def test_return_value(self):
+        # create mock action function
+        mock_action = Mock(return_value=True)
+        mock_action.__name__ = "test_filter"
+
+        # wrap the action function
+        wrapped_action = log_filter_action(mock_action)
+
+        # call the wrapped action
+        got = wrapped_action("value", "query")
+
+        # assert the result is as expected
+        self.assertEqual(got, True)
 
 
-def test_blacklisted_characters():
-    """Test that filters detect blacklisted characters."""
-
-    blacklist_filters = (
-        'unit^=nova_compute',
-        'charm=glance,cinder',
-        'ip=192.168,1,1',
-        'unit~:test',
-        'u^~test;',
-    )
-    with pytest.raises(AssertionError):
-        for filter_str in blacklist_filters:
-            parse_filter_string(filter_str)
-
-
-def test_invalid_filter_modes():
-    """Test that filters detect invalid filter modes."""
-
-    invalid_feature_modes = (
-        'u===unit',
-        'app~^app',
-        'charm^charm',
-        'hostname=-=nodename',
-        'ip127.0.0.1',
-        'machine^^=14/lxd/0',
-    )
-    with pytest.raises(AssertionError):
-        for filter_str in invalid_feature_modes:
-            parse_filter_string(filter_str)
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", True),
+        (1, 1, True),
+        (["a", 2], ["a", 2], True),
+        (2.3, 2.3, True),
+        ("qwerty123", "asdf123", False),
+        (10, 5, False),
+        (["b", 10], ["c", 23], False),
+        (4.5, 21.4, False),
+    ],
+)
+def test_equals_filter(value: object, query: object, want: bool):
+    assert equals_filter(value, query) == want
 
 
-def test_empty_content():
-    """Test that empty content is detected."""
-
-    empty_content = (
-        'charm~',
-        'application^~',
-        'unit=',
-        'm^=',
-        'ip=',
-        'hostname~',
-    )
-    with pytest.raises(AssertionError):
-        for filter_str in empty_content:
-            parse_filter_string(filter_str)
-
-
-@pytest.fixture
-def unit_equals_filter():
-    return JockeyFilter(obj_type=ObjectType.UNIT, mode=FilterMode.EQUALS, content='test-content')
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", False),
+        (1, 1, False),
+        (["a", 2], ["a", 2], False),
+        (2.3, 2.3, False),
+        ("qwerty123", "asdf123", True),
+        (10, 5, True),
+        (["b", 10], ["c", 23], True),
+        (4.5, 21.4, True),
+    ],
+)
+def test_not_equals_filter(value: object, query: object, want: bool):
+    assert not_equals_filter(value, query) == want
 
 
-@pytest.fixture
-def unit_not_equals_filter():
-    return JockeyFilter(
-        obj_type=ObjectType.UNIT,
-        mode=FilterMode.NOT_EQUALS,
-        content='test-content',
-    )
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", True),
+        ("hello world", "hello|hi", True),
+        ("juju-controller/5", "5$", True),
+        ("juju-controller/5", "6$", False),
+        ("kubernetes-worker/13", "^kube", True),
+        ("ceph-mon/4", "^kube", False),
+    ],
+)
+def test_regex_filter(value: str, query: str, want: bool):
+    assert regex_filter(value, query) == want
 
 
-@pytest.fixture
-def unit_contains_filter():
-    return JockeyFilter(
-        obj_type=ObjectType.UNIT,
-        mode=FilterMode.CONTAINS,
-        content='test-content',
-    )
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", False),
+        ("hello world", "hello|hi", False),
+        ("juju-controller/5", "5$", False),
+        ("juju-controller/5", "6$", True),
+        ("kubernetes-worker/13", "^kube", False),
+        ("ceph-mon/4", "^kube", True),
+    ],
+)
+def test_not_regex_filter(value: str, query: str, want: bool):
+    assert not_regex_filter(value, query) == want
 
 
-@pytest.fixture
-def unit_not_contains_filter():
-    return JockeyFilter(
-        obj_type=ObjectType.UNIT,
-        mode=FilterMode.NOT_CONTAINS,
-        content='test-content',
-    )
+@pytest.mark.timeout(1)
+def test_regex_filter_anti_redos():
+    with pytest.raises(TimeoutError):
+        with patch("jockey.filters.REGEX_TIMEOUT", 0.00001):
+            regex_filter("a" * 1000 + "b" + "a" * 1000, r"(a|aa)+")
 
 
-def test_equals_filter_mode(unit_equals_filter):
-    """Test that the equals (=) filters works."""
-    assert check_filter_match(unit_equals_filter, 'test-content')
-    assert not check_filter_match(unit_equals_filter, 'other-content')
+@pytest.mark.timeout(1)
+def test_not_regex_filter_anti_redos():
+    with pytest.raises(TimeoutError):
+        with patch("jockey.filters.REGEX_TIMEOUT", 0.00001):
+            not_regex_filter("a" * 1000 + "b" + "a" * 1000, r"(a|aa)+")
 
 
-def test_not_equals_filter_mode(unit_not_equals_filter):
-    """Test that the not equals (^=) filters works."""
-    assert not check_filter_match(unit_not_equals_filter, 'test-content')
-    assert check_filter_match(unit_not_equals_filter, 'other-content')
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        (1, 2, False),
+        (2, 1, True),
+        (2, 2, False),
+        (1000, 500, True),
+        (24.5, 21.3, True),
+        (10.5, 63.53, False),
+        (92.3, 92.3, False),
+    ],
+)
+def test_greater_than_filter(value: object, query: object, want: bool):
+    assert greater_than_filter(value, query) == want
 
 
-def test_contains_filter_mode(unit_contains_filter):
-    """Test that the contains (~) filters works."""
-    assert check_filter_match(unit_contains_filter, 'test-content')
-    assert check_filter_match(unit_contains_filter, 'test-content/0')
-    assert check_filter_match(unit_contains_filter, 'test-content/1*')
-    assert check_filter_match(unit_contains_filter, 'new-test-content/1*')
-    assert not check_filter_match(unit_contains_filter, 'other-content')
-    assert not check_filter_match(unit_contains_filter, 'test')
-    assert not check_filter_match(unit_contains_filter, 'content')
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        (1, 2, False),
+        (2, 1, True),
+        (2, 2, True),
+        (1000, 500, True),
+        (24.5, 21.3, True),
+        (10.5, 63.53, False),
+        (92.3, 92.3, True),
+    ],
+)
+def test_greater_than_or_equals_filter(value: object, query: object, want: bool):
+    assert greater_than_or_equals_filter(value, query) == want
 
 
-def test_not_contains_filter_mode(unit_not_contains_filter):
-    """Test that the not contains (^~) filters works."""
-    assert not check_filter_match(unit_not_contains_filter, 'test-content')
-    assert check_filter_match(unit_not_contains_filter, 'other-content')
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        (1, 2, True),
+        (2, 1, False),
+        (2, 2, False),
+        (1000, 500, False),
+        (24.5, 21.3, False),
+        (10.5, 63.53, True),
+        (92.3, 92.3, False),
+    ],
+)
+def test_less_than_filter(value: object, query: object, want: bool):
+    assert less_than_filter(value, query) == want
+
+
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        (1, 2, True),
+        (2, 1, False),
+        (2, 2, True),
+        (1000, 500, False),
+        (24.5, 21.3, False),
+        (10.5, 63.53, True),
+        (92.3, 92.3, True),
+    ],
+)
+def test_less_than_or_equals_filter(value: object, query: object, want: bool):
+    assert less_than_or_equals_filter(value, query) == want
+
+
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", True),
+        ("hello world", "hello", True),
+        (["a", 1, 2], "a", True),
+        ({"a": 1, "b": 2}, "a", True),
+        ("abc123", "4", False),
+        ("hello world", "goodbye", False),
+        (["a", 1, 2], "b", False),
+        ({"a": 1, "b": 2}, "c", False),
+    ],
+)
+def test_contains_filter(value: object, query: object, want: bool):
+    assert contains_filter(value, query) == want
+
+
+@pytest.mark.parametrize(
+    "value, query, want",
+    [
+        ("abc123", "abc123", False),
+        ("hello world", "hello", False),
+        (["a", 1, 2], "a", False),
+        ({"a": 1, "b": 2}, "a", False),
+        ("abc123", "4", True),
+        ("hello world", "goodbye", True),
+        (["a", 1, 2], "b", True),
+        ({"a": 1, "b": 2}, "c", True),
+    ],
+)
+def test_not_contains_filter(value: object, query: object, want: bool):
+    assert not_contains_filter(value, query) == want
+
+
+@pytest.mark.parametrize(
+    "value, want",
+    [
+        ("true", True),
+        ("t", True),
+        ("yes", True),
+        ("y", True),
+        ("YES", True),
+        ("Y", True),
+        ("1", True),
+        ("false", False),
+        ("f", False),
+        ("no", False),
+        ("n", False),
+        ("NO", False),
+        ("N", False),
+        ("0", False),
+    ],
+)
+def test_bool_type_parser(value: str, want: bool):
+    assert bool_type_parser(value) == want
+
+
+@pytest.mark.parametrize(
+    "t, want",
+    [
+        (bool, bool_type_parser),
+        (str, str),
+        (int, int),
+        (float, float),
+    ],
+)
+def test_type_parser_for(t: Type[T], want: Callable[[str], T]):
+    assert type_parser_for(t) == want
