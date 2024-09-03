@@ -5,7 +5,7 @@ from typing import NamedTuple, Sequence
 import pytest
 
 from jockey.__main__ import main
-from tests.util import SAMPLES_DIR, StandardOutputCapture
+from tests.test_util import SAMPLES_DIR, StandardOutputCapture
 
 
 K8S_SAMPLE_PATH = os.path.join(SAMPLES_DIR, "k8s-core-juju-status.json")

@@ -34,10 +34,10 @@ class TestOrderingComparable:
         return self.DummyOrderingComparable()
 
     def test_lt_method(self, ordering_comparable):
-        assert ordering_comparable.__lt__(1) == True
+        assert ordering_comparable.__lt__(1)
 
     def test_gt_method(self, ordering_comparable):
-        assert ordering_comparable.__gt__(2) == True
+        assert ordering_comparable.__gt__(2)
 
 
 class TestEqualityComparable:
@@ -53,10 +53,10 @@ class TestEqualityComparable:
         return self.DummyEqualityComparable()
 
     def test_eq_method(self, equality_comparable):
-        assert equality_comparable.__eq__(1) == True
+        assert equality_comparable.__eq__(1)
 
     def test_ne_method(self, equality_comparable):
-        assert equality_comparable.__ne__(1) == True
+        assert equality_comparable.__ne__(1)
 
 
 class TestOrderingEqualityComparable:
@@ -84,37 +84,36 @@ class TestOrderingEqualityComparable:
         return self.DummyOrderingEqualityComparable()
 
     def test_lt_method(self, ordering_equality_comparable):
-        assert ordering_equality_comparable.__lt__(1) == True
+        assert ordering_equality_comparable.__lt__(1)
 
     def test_gt_method(self, ordering_equality_comparable):
-        assert ordering_equality_comparable.__gt__(2) == True
+        assert ordering_equality_comparable.__gt__(2)
 
     def test_eq_method(self, ordering_equality_comparable):
-        assert ordering_equality_comparable.__eq__(1) == True
+        assert ordering_equality_comparable.__eq__(1)
 
 
-@pytest.mark.parametrize("t", [int(1), float(1.2), str("1"), bool(True), None, list(), dict()])
+@pytest.mark.parametrize("t", [int(1), float(1.2), "1", bool(True), None, list(), dict()])
 def test_type_for_ordering_comparable(t: object):
-    assert OrderingComparable.is_valid(t) == True
+    assert OrderingComparable.is_valid(t)
 
 
-@pytest.mark.parametrize("t", [int(1), float(1.2), str("1"), bool(True), None, list(), dict()])
+@pytest.mark.parametrize("t", [int(1), float(1.2), "1", bool(True), None, list(), dict()])
 def test_type_for_equality_comparable(t: object):
-    assert EqualityComparable.is_valid(t) == True
+    assert EqualityComparable.is_valid(t)
 
 
-@pytest.mark.parametrize("t", [int(1), float(1.2), str("1"), bool(True), None, list(), dict()])
+@pytest.mark.parametrize("t", [int(1), float(1.2), "1", bool(True), None, list(), dict()])
 def test_type_for_ordering_equality_comparable(t: object):
-    assert OrderingEqualityComparable.is_valid(t) == True
+    assert OrderingEqualityComparable.is_valid(t)
 
 
-@pytest.mark.parametrize("t", [str("1"), list(), dict()])
+@pytest.mark.parametrize("t", ["1", list(), dict()])
 def test_type_for_contains_comparable(t: object):
-    assert ContainsComparable.is_valid(t) == True
+    assert ContainsComparable.is_valid(t)
 
 
 def uses_typevar_params_cases() -> List[Tuple[Callable[..., Any], bool]]:
-
     def all_typevar_func(a: O_C, b: E_C, c: OE_C) -> bool:
         print(a, b, c)
         return True

@@ -80,7 +80,7 @@ class Object(Enum):
         :return: A set of all tokens corresponding to the Juju object types.
         """
 
-        return set(token for obj in Object for token in obj.value.names)
+        return {token for obj in Object for token in obj.value.names}
 
     @staticmethod
     def names() -> set[str]:
@@ -89,7 +89,7 @@ class Object(Enum):
 
         :return: A set of all names associated with the Juju object types.
         """
-        return set(str(obj) for obj in Object)
+        return {str(obj) for obj in Object}
 
     @staticmethod
     def from_str(obj_name: str) -> "Object":
