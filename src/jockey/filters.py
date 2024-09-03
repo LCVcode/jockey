@@ -88,8 +88,13 @@ def regex_filter(value: str, query: str) -> bool:
     :param value: The value to compare.
     :param query: The regular expression query to match against.
     :return: True if the value matches the query, otherwise False.
+    :raises TimeoutError: If :obj:`REGEX_TIMEOUT` is exceeded.
     """
-    return regex.search(str(query), str(value), flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is not None
+    try:
+        return regex.search(str(query), str(value), flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is not None
+    except TimeoutError as e:
+        logger.warning("Encountered timeout on %r regex %r: %s", value, query, e)
+        raise e
 
 
 @log_filter_action
@@ -100,8 +105,13 @@ def not_regex_filter(value: str, query: str) -> bool:
     :param value: The value to compare.
     :param query: The regular expression query to match against.
     :return: True if the value does not match the query, otherwise False.
+    :raises TimeoutError: If :obj:`REGEX_TIMEOUT` is exceeded.
     """
-    return regex.search(str(query), str(value), flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is None
+    try:
+        return regex.search(str(query), str(value), flags=REGEX_FLAGS, timeout=REGEX_TIMEOUT) is None
+    except TimeoutError as e:
+        logger.warning("Encountered timeout on %r not_regex %r: %s", value, query, e)
+        raise e
 
 
 @log_filter_action

@@ -132,6 +132,20 @@ def test_not_regex_filter(value: str, query: str, want: bool):
     assert not_regex_filter(value, query) == want
 
 
+@pytest.mark.timeout(1)
+def test_regex_filter_anti_redos():
+    with pytest.raises(TimeoutError):
+        with patch("jockey.filters.REGEX_TIMEOUT", 0.00001):
+            regex_filter("a" * 1000 + "b" + "a" * 1000, r"(a|aa)+")
+
+
+@pytest.mark.timeout(1)
+def test_not_regex_filter_anti_redos():
+    with pytest.raises(TimeoutError):
+        with patch("jockey.filters.REGEX_TIMEOUT", 0.00001):
+            not_regex_filter("a" * 1000 + "b" + "a" * 1000, r"(a|aa)+")
+
+
 @pytest.mark.parametrize(
     "value, query, want",
     [
