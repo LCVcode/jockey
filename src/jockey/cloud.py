@@ -6,12 +6,12 @@ from shlex import quote as shell_quote
 from textwrap import dedent
 from typing import Any, Dict, NamedTuple, Optional, Union
 
-from fabric import Config as FabricConfig
-from fabric import Connection
-from fabric import Result as FabricResult
-from invoke import Config as InvokeConfig
-from invoke import Context
-from invoke import Result as InvokeResult
+from fabric import Config as FabricConfig  # type: ignore[import-untyped]
+from fabric import Connection  # type: ignore[import-untyped]
+from fabric import Result as FabricResult  # type: ignore[import-untyped]
+from invoke import Config as InvokeConfig  # type: ignore[import-untyped]
+from invoke import Context  # type: ignore[import-untyped]
+from invoke import Result as InvokeResult  # type: ignore[import-untyped]
 from orjson import loads as json_loads
 from paramiko.ssh_exception import PasswordRequiredException
 
@@ -193,7 +193,7 @@ class Cloud(Connection, Context):
         return kwargs
 
     def __str__(self) -> str:
-        return "localhost" if self.localhost else self.host
+        return ("localhost" if self.localhost else self.host) or "unknown"
 
     @staticmethod
     def model_reference(controller: str, model: str) -> str:
