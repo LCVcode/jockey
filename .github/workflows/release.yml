@@ -1,0 +1,276 @@
+name: Release
+concurrency: release
+
+env:
+  BOT_NAME: Jockey Release Bot
+  BOT_EMAIL: jockey-release@users.noreply.github.com
+  BRANCH_STAGING: staging
+  BRANCH_RELEASE: release
+  CHGLOG_VERSION: 0.15.4
+
+on:
+  pull_request_target:
+    branches: ['${{ env.BRANCH_RELEASE }}', '${{ env.BRANCH_STAGING }}']
+    types: [closed]
+
+jobs:
+  bump-version:
+    if: |
+      (
+        github.run_attempt == '1'
+        && github.event.pull_request.merged
+        && ! contains(github.event.pull_request.title, '[skip release]')
+        && (
+            github.event.pull_request.base.ref == env.BRANCH_STAGING
+            || (
+                github.event.pull_request.base.ref == env.BRANCH_RELEASE
+                && github.event.pull_request.head.ref == env.BRANCH_STAGING
+            )
+        )
+      )
+    name: Bump version
+    runs-on: ubuntu-latest
+    outputs:
+      new_tag_name: ${{ steps.get_new_tag.outputs.new_tag_name }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'   # get all history
+        ref: ${{ github.event.pull_request.base.ref }}
+    - name: Configure git
+      run: |
+        git config user.name "${{ env.BOT_NAME }}"
+        git config user.email "${{ env.BOT_EMAIL }}"
+    - name: Install Python toolchain
+      with:
+        python-version-file: .python-version
+    - name: Install git-chglog
+      run: |
+        wget https://github.com/git-chglog/git-chglog/releases/download/v${{ env.CHGLOG_VERSION }}/git-chglog_${{ env.CHGLOG_VERSION }}_linux_amd64.tar.gz
+        tar --extract --file git-chglog_${{ env.CHGLOG_VERSION }}_linux_amd64.tar.gz git-chglog
+    - name: Install commitizen
+      run: pip install commitizen
+    - name: Manipulate tags (release)
+      if: github.event.pull_request.base.ref == env.BRANCH_RELEASE
+      run: | # delete all pre-release tags, set current version to the latest release
+        CUR_PRE_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        echo "CUR_PRE_TAG is: $CUR_PRE_TAG"
+        echo "cur_pre_tag=$CUR_PRE_TAG" >> $GITHUB_ENV
+        git tag -l | awk '/^(v[0-9]+\.[0-9]+\.[0-9]+(a|b|rc).*)$/ {print $1}' | xargs git tag -d
+    - name: Get current tag
+      run: |
+        CUR_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        echo "CUR_TAG is: $CUR_TAG"
+        echo "cur_tag=$CUR_TAG" >> $GITHUB_ENV
+    - name: Commitizen bump (staging)
+      if: github.event.pull_request.base.ref == env.BRANCH_STAGING
+      run: cz bump --prerelease alpha
+    - name: Commitizen bump (release)
+      if: github.event.pull_request.base.ref == env.BRANCH_RELEASE
+      run: |
+        python3 -c "
+          from commitizen.bump import update_version_in_files
+          update_version_in_files(
+              current_version='${{ env.cur_pre_tag }}'.lstrip('v'),
+              new_version='${{ env.cur_tag }}'.lstrip('v'),
+              files=['pyproject.toml', 'src/jockey/__init__.py'],
+          )"
+        cz bump
+    - name: Get new tag
+      id: get_new_tag
+      run: |
+        NEW_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+        echo "NEW_TAG is: $NEW_TAG"
+        echo "new_tag=$NEW_TAG" >> $GITHUB_ENV
+        echo "new_tag_name=$NEW_TAG" >> $GITHUB_OUTPUT
+    - name: Generate CHANGELOG (release)
+      if: github.event.pull_request.base.ref == env.BRANCH_RELEASE
+      run: |
+        ./git-chglog --output CHANGELOG.md
+        git add CHANGELOG.md
+    - name: Generate CHANGELOG-staging (staging)
+      if: github.event.pull_request.base.ref == env.BRANCH_STAGING
+      run: |
+        ./git-chglog --output CHANGELOG-staging.md
+        git add CHANGELOG-staging.md
+    - name: Push new CHANGELOG
+      run: |
+        git tag -d ${{ env.new_tag }}
+        git commit --amend --no-edit
+        git tag ${{ env.new_tag }}
+        git push && git push origin ${{ env.new_tag }}
+    - name: Rebase into develop branch if exists (release)
+      if: github.event.pull_request.base.ref == env.BRANCH_RELEASE
+      run: |
+        exists_in_remote=$(git ls-remote --heads origin refs/heads/${{ env.BRANCH_RELEASE }})
+        echo "exists_in_remote: $exists_in_remote"
+        if [[ -n $exists_in_remote ]]; then
+          export SKIP=end-of-file-fixer
+          git checkout ${{ env.BRANCH_STAGING }}
+          git pull
+          git rebase ${{ env.BRANCH_RELEASE }}
+          git push -u origin ${{ env.BRANCH_STAGING }}
+        else
+          echo "No ${{ env.BRANCH_STAGING }} branch to merge into."
+        fi
+    - name: Generate incremental CHANGELOG for GitHub release body (release)
+      if: github.event.pull_request.base.ref == env.BRANCH_RELEASE
+      run: |
+        ./git-chglog --template .chglog/RELEASE.tpl.md --output CHANGELOG-incremental.md ${{ env.cur_tag }}..
+        cat CHANGELOG-incremental.md
+    - name: Generate incremental CHANGELOG for GitHub release body (staging)
+      if: github.event.pull_request.base.ref == env.BRANCH_STAGING
+      run: |
+        ./git-chglog --template .chglog/RELEASE.tpl.md --output CHANGELOG-incremental.md ${{ env.new_tag }}
+        cat CHANGELOG-incremental.md
+    - uses: actions/upload-artifact@v4
+      with:
+        name: CHANGELOG-incremental
+        path: CHANGELOG-incremental.md
+
+  build-snap:
+    name: Build snap
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.base.ref }}
+    - name: Snapcraft
+      uses: snapcore/action-build@v1
+      id: snapcraft
+    - name: Upload logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: snapcraft-logs
+        path: ~/.local/state/snapcraft/log/*.log
+    - name: Upload Snap artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.snap
+        path: ${{ steps.snapcraft.outputs.snap }}
+
+  build-executables:
+    name: Build executables
+    needs: bump-version
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+        - os: ubuntu-latest
+          executable_os: linux
+          executable_ext: ''
+        - os: macos-latest
+          executable_os: macOS
+          executable_ext: ''
+        - os: windows-latest
+          executable_os: win
+          executable_ext: .exe
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.base.ref }}
+    - name: Install Python toolchain
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: 1.8.3
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    - name: Load cached environment
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock', '**/pyproject.toml') }}
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root --all-extras --with dev
+    - name: Build executable
+      run: poetry run pyinstaller --name=juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }} --onefile src/jockey/__main__.py
+    - name: Upload executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
+        path: dist/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
+    - name: Upload spec
+      uses: actions/upload-artifact@v4
+      with:
+        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
+        path: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
+    - name: Upload build directory
+      uses: actions/upload-artifact@v4
+      with:
+        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}-build
+        path: build/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}
+
+  release:
+    name: Release
+    needs: [bump-version, build-executables, build-snap]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.pull_request.base.ref }}
+    - name: Install Python toolchain
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: .python-version
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.4.1
+      with:
+        version: 1.8.3
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    - name: Load cached environment
+      id: cached-poetry-dependencies
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock', '**/pyproject.toml') }}
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root --all-extras --with dev
+    - name: Build for Python
+      run: poetry build
+    - name: Create release-artifacts
+      run: mkdir -p release-artifacts
+    - name: Download artifacts
+      id: download_artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release-artifacts
+    - name: Display release-artifacts structure
+      run: ls -R
+    - name: Publish GitHub release
+      id: release
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: release-artifacts/CHANGELOG-incremental/CHANGELOG-incremental.md
+        tag_name: ${{ needs.bump-version.outputs.new_tag_name }}
+        files: |
+          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-linux
+          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-macOS
+          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-win.exe
+    - name: Determine if PYPI_TOKEN is available
+      id: has_pypi
+      run: echo 'result=${{ secrets.PYPI_TOKEN }}' >> $GITHUB_OUTPUT
+    - name: Publish PyPI release
+      if: steps.has_pypi.outputs.result != 0
+      run: |
+        poetry config repositories.pypi https://upload.pypi.org/legacy/
+        poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+        poetry publish --repository pypi
