@@ -36,7 +36,7 @@ jobs:
       - name: Run Sphinx
         shell: bash
         run: |
-          poetry shell
+          source $(poetry env info)/bin/activate
           make -C docs html
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
