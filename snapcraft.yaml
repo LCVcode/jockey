@@ -20,21 +20,21 @@ plugs:
   dot-local-share-juju:
     interface: personal-files
     read:
-      - $HOME/.local/share/juju
-      - $HOME/.local/share/juju/ssh
-      - $HOME/.local/share/juju/lxd
+    - $HOME/.local/share/juju
+    - $HOME/.local/share/juju/ssh
+    - $HOME/.local/share/juju/lxd
     write:
-      - $HOME/.local/share/juju/cookies
+    - $HOME/.local/share/juju/cookies
 
 apps:
   juju-jockey:
     command: bin/juju-jockey
     plugs:
-      - juju-bin
-      - dot-local-share-juju
-      - home
-      - ssh-keys
-      - network
+    - juju-bin
+    - dot-local-share-juju
+    - home
+    - ssh-keys
+    - network
 
 parts:
   juju-jockey:
@@ -42,15 +42,15 @@ parts:
     source: .
     source-type: local
     build-snaps:
-      - jq
-      - remarshal
+    - jq
+    - remarshal
     build-environment:
-      - SNAPCRAFT_PYTHON_INTERPRETER: python3.10
+    - SNAPCRAFT_PYTHON_INTERPRETER: python3.10
     build-packages:
-      - python3.10
+    - python3.10
     stage-packages:
-      - python3.10-minimal
-      - python3.10-venv
+    - python3.10-minimal
+    - python3.10-venv
     override-build: |
       craftctl default
       craftctl set version="$(env -u SNAPCRAFT_PART_INSTALL -u SNAPCRAFT_STAGE -- /snap/bin/toml2json $SNAPCRAFT_PART_BUILD/pyproject.toml | /snap/bin/jq -r '.tool.poetry.version')"

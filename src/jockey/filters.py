@@ -258,7 +258,7 @@ class FilterMode(Enum):
 
         :return: A set of tokens.
         """
-        return set(token for mode in FilterMode for token in mode.value.tokens)
+        return {token for mode in FilterMode for token in mode.value.tokens}
 
 
 def bool_type_parser(value: str) -> bool:

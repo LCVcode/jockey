@@ -1,1 +1,644 @@
-{"model":{"name":"jockey","type":"iaas","controller":"local-controller","cloud":"localhost","region":"localhost","version":"3.1.5","model-status":{"current":"available","since":"23 Mar 2024 12:36:37-06:00"},"sla":"unsupported"},"machines":{"0":{"juju-status":{"current":"started","since":"23 Mar 2024 12:47:14-06:00","version":"3.1.5"},"hostname":"juju-36490e-0","dns-name":"10.118.249.243","ip-addresses":["10.118.249.243"],"instance-id":"juju-36490e-0","machine-status":{"current":"running","message":"Running","since":"23 Mar 2024 12:45:28-06:00"},"modification-status":{"current":"applied","since":"23 Mar 2024 12:45:23-06:00"},"base":{"name":"ubuntu","channel":"22.04"},"network-interfaces":{"eth0":{"ip-addresses":["10.118.249.243"],"mac-address":"00:16:3e:ea:97:27","gateway":"10.118.249.1","space":"alpha","is-up":true},"lxdbr0":{"ip-addresses":["10.192.62.1"],"mac-address":"00:16:3e:0e:22:8c","is-up":true}},"containers":{"0/lxd/0":{"juju-status":{"current":"started","since":"23 Mar 2024 12:58:02-06:00","version":"3.1.5"},"hostname":"juju-36490e-0-lxd-0","dns-name":"10.192.62.201","ip-addresses":["10.192.62.201"],"instance-id":"juju-36490e-0-lxd-0","machine-status":{"current":"running","message":"Container started","since":"23 Mar 2024 12:55:19-06:00"},"modification-status":{"current":"applied","since":"23 Mar 2024 13:29:51-06:00"},"base":{"name":"ubuntu","channel":"22.04"},"network-interfaces":{"eth0":{"ip-addresses":["10.192.62.201"],"mac-address":"00:16:3e:16:55:cb","gateway":"10.192.62.1","is-up":true}}}},"constraints":"cores=2 mem=8192M root-disk=16384M","hardware":"arch=amd64 cores=2 mem=8192M virt-type=container","lxd-profiles":{"juju-jockey-kubernetes-control-plane-416":{"config":{"linux.kernel_modules":"ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,rbd,ip_vs,ip_vs_rr,ip_vs_wrr,ip_vs_sh","raw.lxc":"lxc.apparmor.profile=unconfined\nlxc.mount.auto=proc:rw sys:rw\nlxc.cgroup.devices.allow=a\nlxc.cap.drop=\n","security.nesting":"true","security.privileged":"true"},"description":"","devices":{"aadisable":{"path":"/dev/kmsg","source":"/dev/kmsg","type":"unix-char"}}}}},"1":{"juju-status":{"current":"started","since":"23 Mar 2024 12:47:11-06:00","version":"3.1.5"},"hostname":"juju-36490e-1","dns-name":"10.118.249.130","ip-addresses":["10.118.249.130"],"instance-id":"juju-36490e-1","machine-status":{"current":"running","message":"Running","since":"23 Mar 2024 12:45:28-06:00"},"modification-status":{"current":"applied","since":"23 Mar 2024 12:45:23-06:00"},"base":{"name":"ubuntu","channel":"22.04"},"network-interfaces":{"eth0":{"ip-addresses":["10.118.249.130"],"mac-address":"00:16:3e:33:df:51","gateway":"10.118.249.1","space":"alpha","is-up":true}},"constraints":"cores=2 mem=8192M root-disk=16384M","hardware":"arch=amd64 cores=2 mem=8192M virt-type=container"}},"applications":{"calico":{"charm":"calico","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"calico","charm-rev":103,"charm-channel":"stable","charm-version":"e1dfdda","exposed":false,"application-status":{"current":"blocked","message":"ignore-loose-rpf config is in conflict with rp_filter value","since":"23 Mar 2024 13:33:01-06:00"},"relations":{"cni":[{"related-application":"kubernetes-control-plane","interface":"kubernetes-cni","scope":"container"},{"related-application":"kubernetes-worker","interface":"kubernetes-cni","scope":"container"}],"etcd":[{"related-application":"etcd","interface":"etcd","scope":"global"}]},"subordinate-to":["kubernetes-control-plane","kubernetes-worker"],"endpoint-bindings":{"":"alpha","cni":"alpha","etcd":"alpha"}},"containerd":{"charm":"containerd","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"containerd","charm-rev":75,"charm-channel":"stable","charm-version":"4260c72","exposed":false,"application-status":{"current":"blocked","message":"containerd resource binary containerd-stress failed a version check","since":"23 Mar 2024 13:32:54-06:00"},"relations":{"containerd":[{"related-application":"kubernetes-control-plane","interface":"container-runtime","scope":"container"},{"related-application":"kubernetes-worker","interface":"container-runtime","scope":"container"}]},"subordinate-to":["kubernetes-control-plane","kubernetes-worker"],"version":"1.6.8","endpoint-bindings":{"":"alpha","containerd":"alpha","docker-registry":"alpha","untrusted":"alpha"}},"easyrsa":{"charm":"easyrsa","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"easyrsa","charm-rev":55,"charm-channel":"stable","charm-version":"b26c377","exposed":false,"application-status":{"current":"active","message":"Certificate Authority connected.","since":"23 Mar 2024 13:03:27-06:00"},"relations":{"client":[{"related-application":"etcd","interface":"tls-certificates","scope":"global"},{"related-application":"kubernetes-control-plane","interface":"tls-certificates","scope":"global"},{"related-application":"kubernetes-worker","interface":"tls-certificates","scope":"global"}]},"units":{"easyrsa/0":{"workload-status":{"current":"active","message":"Certificate Authority connected.","since":"23 Mar 2024 13:03:27-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:29:59-06:00","version":"3.1.5"},"leader":true,"machine":"0/lxd/0","public-address":"10.192.62.201"}},"version":"3.0.1","endpoint-bindings":{"":"alpha","client":"alpha"}},"etcd":{"charm":"etcd","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"etcd","charm-rev":760,"charm-channel":"stable","charm-version":"bbb2ed3","exposed":false,"application-status":{"current":"active","message":"Healthy with 1 known peer","since":"23 Mar 2024 13:07:06-06:00"},"relations":{"certificates":[{"related-application":"easyrsa","interface":"tls-certificates","scope":"global"}],"cluster":[{"related-application":"etcd","interface":"etcd","scope":"global"}],"db":[{"related-application":"calico","interface":"etcd","scope":"global"},{"related-application":"kubernetes-control-plane","interface":"etcd","scope":"global"}]},"units":{"etcd/0":{"workload-status":{"current":"active","message":"Healthy with 1 known peer","since":"23 Mar 2024 13:07:06-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:30:36-06:00","version":"3.1.5"},"leader":true,"machine":"0","open-ports":["2379/tcp"],"public-address":"10.118.249.243"}},"version":"3.4.22","endpoint-bindings":{"":"alpha","certificates":"alpha","cluster":"alpha","db":"alpha","grafana":"alpha","nrpe-external-master":"alpha","prometheus":"alpha","proxy":"alpha"}},"kubernetes-control-plane":{"charm":"kubernetes-control-plane","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"kubernetes-control-plane","charm-rev":416,"charm-channel":"stable","charm-profile":"juju-jockey-kubernetes-control-plane-416","exposed":true,"application-status":{"current":"active","since":"23 Mar 2024 13:31:34-06:00"},"relations":{"certificates":[{"related-application":"easyrsa","interface":"tls-certificates","scope":"global"}],"cni":[{"related-application":"calico","interface":"kubernetes-cni","scope":"container"}],"container-runtime":[{"related-application":"containerd","interface":"container-runtime","scope":"container"}],"coordinator":[{"related-application":"kubernetes-control-plane","interface":"coordinator","scope":"global"}],"etcd":[{"related-application":"etcd","interface":"etcd","scope":"global"}],"kube-control":[{"related-application":"kubernetes-worker","interface":"kube-control","scope":"global"}],"peer":[{"related-application":"kubernetes-control-plane","interface":"kubernetes-control-plane-peer","scope":"global"}]},"units":{"kubernetes-control-plane/0":{"workload-status":{"current":"active","since":"23 Mar 2024 13:31:34-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:31:34-06:00","version":"3.1.5"},"leader":true,"machine":"0","open-ports":["6443/tcp"],"public-address":"10.118.249.243","subordinates":{"calico/1":{"workload-status":{"current":"blocked","message":"ignore-loose-rpf config is in conflict with rp_filter value","since":"23 Mar 2024 13:31:36-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:31:36-06:00","version":"3.1.5"},"public-address":"10.118.249.243"},"containerd/1":{"workload-status":{"current":"blocked","message":"May need reboot to activate GPU.","since":"23 Mar 2024 13:08:51-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:31:37-06:00","version":"3.1.5"},"public-address":"10.118.249.243"}}}},"version":"1.29.3","endpoint-bindings":{"":"alpha","aws":"alpha","ceph-client":"alpha","certificates":"alpha","cni":"alpha","container-runtime":"alpha","coordinator":"alpha","cos-agent":"alpha","dns-provider":"alpha","etcd":"alpha","external-cloud-provider":"alpha","ha":"alpha","keystone-credentials":"alpha","kube-control":"alpha","loadbalancer-external":"alpha","loadbalancer-internal":"alpha","peer":"alpha","tokens":"alpha","vault-kv":"alpha"}},"kubernetes-worker":{"charm":"kubernetes-worker","base":{"name":"ubuntu","channel":"22.04"},"charm-origin":"charmhub","charm-name":"kubernetes-worker","charm-rev":198,"charm-channel":"stable","charm-version":"2a7b3a5","exposed":true,"application-status":{"current":"active","since":"23 Mar 2024 13:15:47-06:00"},"relations":{"certificates":[{"related-application":"easyrsa","interface":"tls-certificates","scope":"global"}],"cni":[{"related-application":"calico","interface":"kubernetes-cni","scope":"container"}],"container-runtime":[{"related-application":"containerd","interface":"container-runtime","scope":"container"}],"coordinator":[{"related-application":"kubernetes-worker","interface":"coordinator","scope":"global"}],"kube-control":[{"related-application":"kubernetes-control-plane","interface":"kube-control","scope":"global"}]},"units":{"kubernetes-worker/0":{"workload-status":{"current":"active","since":"23 Mar 2024 13:15:47-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:15:52-06:00","version":"3.1.5"},"leader":true,"machine":"1","open-ports":["80/tcp","443/tcp"],"public-address":"10.118.249.130","subordinates":{"calico/0":{"workload-status":{"current":"blocked","message":"ignore-loose-rpf config is in conflict with rp_filter value","since":"23 Mar 2024 13:33:01-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:12:05-06:00","version":"3.1.5"},"leader":true,"public-address":"10.118.249.130"},"containerd/0":{"workload-status":{"current":"blocked","message":"containerd resource binary containerd-stress failed a version check","since":"23 Mar 2024 13:32:54-06:00"},"juju-status":{"current":"idle","since":"23 Mar 2024 13:12:02-06:00","version":"3.1.5"},"leader":true,"public-address":"10.118.249.130"}}}},"version":"1.29.3","endpoint-bindings":{"":"alpha","aws":"alpha","certificates":"alpha","cni":"alpha","container-runtime":"alpha","coordinator":"alpha","cos-agent":"alpha","kube-control":"alpha","tokens":"alpha"}}},"storage":{},"controller":{"timestamp":"13:34:27-06:00"}}
+{
+  "model": {
+    "name": "jockey",
+    "type": "iaas",
+    "controller": "local-controller",
+    "cloud": "localhost",
+    "region": "localhost",
+    "version": "3.1.5",
+    "model-status": {
+      "current": "available",
+      "since": "23 Mar 2024 12:36:37-06:00"
+    },
+    "sla": "unsupported"
+  },
+  "machines": {
+    "0": {
+      "juju-status": {
+        "current": "started",
+        "since": "23 Mar 2024 12:47:14-06:00",
+        "version": "3.1.5"
+      },
+      "hostname": "juju-36490e-0",
+      "dns-name": "10.118.249.243",
+      "ip-addresses": [
+        "10.118.249.243"
+      ],
+      "instance-id": "juju-36490e-0",
+      "machine-status": {
+        "current": "running",
+        "message": "Running",
+        "since": "23 Mar 2024 12:45:28-06:00"
+      },
+      "modification-status": {
+        "current": "applied",
+        "since": "23 Mar 2024 12:45:23-06:00"
+      },
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "network-interfaces": {
+        "eth0": {
+          "ip-addresses": [
+            "10.118.249.243"
+          ],
+          "mac-address": "00:16:3e:ea:97:27",
+          "gateway": "10.118.249.1",
+          "space": "alpha",
+          "is-up": true
+        },
+        "lxdbr0": {
+          "ip-addresses": [
+            "10.192.62.1"
+          ],
+          "mac-address": "00:16:3e:0e:22:8c",
+          "is-up": true
+        }
+      },
+      "containers": {
+        "0/lxd/0": {
+          "juju-status": {
+            "current": "started",
+            "since": "23 Mar 2024 12:58:02-06:00",
+            "version": "3.1.5"
+          },
+          "hostname": "juju-36490e-0-lxd-0",
+          "dns-name": "10.192.62.201",
+          "ip-addresses": [
+            "10.192.62.201"
+          ],
+          "instance-id": "juju-36490e-0-lxd-0",
+          "machine-status": {
+            "current": "running",
+            "message": "Container started",
+            "since": "23 Mar 2024 12:55:19-06:00"
+          },
+          "modification-status": {
+            "current": "applied",
+            "since": "23 Mar 2024 13:29:51-06:00"
+          },
+          "base": {
+            "name": "ubuntu",
+            "channel": "22.04"
+          },
+          "network-interfaces": {
+            "eth0": {
+              "ip-addresses": [
+                "10.192.62.201"
+              ],
+              "mac-address": "00:16:3e:16:55:cb",
+              "gateway": "10.192.62.1",
+              "is-up": true
+            }
+          }
+        }
+      },
+      "constraints": "cores=2 mem=8192M root-disk=16384M",
+      "hardware": "arch=amd64 cores=2 mem=8192M virt-type=container",
+      "lxd-profiles": {
+        "juju-jockey-kubernetes-control-plane-416": {
+          "config": {
+            "linux.kernel_modules": "ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,rbd,ip_vs,ip_vs_rr,ip_vs_wrr,ip_vs_sh",
+            "raw.lxc": "lxc.apparmor.profile=unconfined\nlxc.mount.auto=proc:rw sys:rw\nlxc.cgroup.devices.allow=a\nlxc.cap.drop=\n",
+            "security.nesting": "true",
+            "security.privileged": "true"
+          },
+          "description": "",
+          "devices": {
+            "aadisable": {
+              "path": "/dev/kmsg",
+              "source": "/dev/kmsg",
+              "type": "unix-char"
+            }
+          }
+        }
+      }
+    },
+    "1": {
+      "juju-status": {
+        "current": "started",
+        "since": "23 Mar 2024 12:47:11-06:00",
+        "version": "3.1.5"
+      },
+      "hostname": "juju-36490e-1",
+      "dns-name": "10.118.249.130",
+      "ip-addresses": [
+        "10.118.249.130"
+      ],
+      "instance-id": "juju-36490e-1",
+      "machine-status": {
+        "current": "running",
+        "message": "Running",
+        "since": "23 Mar 2024 12:45:28-06:00"
+      },
+      "modification-status": {
+        "current": "applied",
+        "since": "23 Mar 2024 12:45:23-06:00"
+      },
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "network-interfaces": {
+        "eth0": {
+          "ip-addresses": [
+            "10.118.249.130"
+          ],
+          "mac-address": "00:16:3e:33:df:51",
+          "gateway": "10.118.249.1",
+          "space": "alpha",
+          "is-up": true
+        }
+      },
+      "constraints": "cores=2 mem=8192M root-disk=16384M",
+      "hardware": "arch=amd64 cores=2 mem=8192M virt-type=container"
+    }
+  },
+  "applications": {
+    "calico": {
+      "charm": "calico",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "calico",
+      "charm-rev": 103,
+      "charm-channel": "stable",
+      "charm-version": "e1dfdda",
+      "exposed": false,
+      "application-status": {
+        "current": "blocked",
+        "message": "ignore-loose-rpf config is in conflict with rp_filter value",
+        "since": "23 Mar 2024 13:33:01-06:00"
+      },
+      "relations": {
+        "cni": [
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "kubernetes-cni",
+            "scope": "container"
+          },
+          {
+            "related-application": "kubernetes-worker",
+            "interface": "kubernetes-cni",
+            "scope": "container"
+          }
+        ],
+        "etcd": [
+          {
+            "related-application": "etcd",
+            "interface": "etcd",
+            "scope": "global"
+          }
+        ]
+      },
+      "subordinate-to": [
+        "kubernetes-control-plane",
+        "kubernetes-worker"
+      ],
+      "endpoint-bindings": {
+        "": "alpha",
+        "cni": "alpha",
+        "etcd": "alpha"
+      }
+    },
+    "containerd": {
+      "charm": "containerd",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "containerd",
+      "charm-rev": 75,
+      "charm-channel": "stable",
+      "charm-version": "4260c72",
+      "exposed": false,
+      "application-status": {
+        "current": "blocked",
+        "message": "containerd resource binary containerd-stress failed a version check",
+        "since": "23 Mar 2024 13:32:54-06:00"
+      },
+      "relations": {
+        "containerd": [
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "container-runtime",
+            "scope": "container"
+          },
+          {
+            "related-application": "kubernetes-worker",
+            "interface": "container-runtime",
+            "scope": "container"
+          }
+        ]
+      },
+      "subordinate-to": [
+        "kubernetes-control-plane",
+        "kubernetes-worker"
+      ],
+      "version": "1.6.8",
+      "endpoint-bindings": {
+        "": "alpha",
+        "containerd": "alpha",
+        "docker-registry": "alpha",
+        "untrusted": "alpha"
+      }
+    },
+    "easyrsa": {
+      "charm": "easyrsa",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "easyrsa",
+      "charm-rev": 55,
+      "charm-channel": "stable",
+      "charm-version": "b26c377",
+      "exposed": false,
+      "application-status": {
+        "current": "active",
+        "message": "Certificate Authority connected.",
+        "since": "23 Mar 2024 13:03:27-06:00"
+      },
+      "relations": {
+        "client": [
+          {
+            "related-application": "etcd",
+            "interface": "tls-certificates",
+            "scope": "global"
+          },
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "tls-certificates",
+            "scope": "global"
+          },
+          {
+            "related-application": "kubernetes-worker",
+            "interface": "tls-certificates",
+            "scope": "global"
+          }
+        ]
+      },
+      "units": {
+        "easyrsa/0": {
+          "workload-status": {
+            "current": "active",
+            "message": "Certificate Authority connected.",
+            "since": "23 Mar 2024 13:03:27-06:00"
+          },
+          "juju-status": {
+            "current": "idle",
+            "since": "23 Mar 2024 13:29:59-06:00",
+            "version": "3.1.5"
+          },
+          "leader": true,
+          "machine": "0/lxd/0",
+          "public-address": "10.192.62.201"
+        }
+      },
+      "version": "3.0.1",
+      "endpoint-bindings": {
+        "": "alpha",
+        "client": "alpha"
+      }
+    },
+    "etcd": {
+      "charm": "etcd",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "etcd",
+      "charm-rev": 760,
+      "charm-channel": "stable",
+      "charm-version": "bbb2ed3",
+      "exposed": false,
+      "application-status": {
+        "current": "active",
+        "message": "Healthy with 1 known peer",
+        "since": "23 Mar 2024 13:07:06-06:00"
+      },
+      "relations": {
+        "certificates": [
+          {
+            "related-application": "easyrsa",
+            "interface": "tls-certificates",
+            "scope": "global"
+          }
+        ],
+        "cluster": [
+          {
+            "related-application": "etcd",
+            "interface": "etcd",
+            "scope": "global"
+          }
+        ],
+        "db": [
+          {
+            "related-application": "calico",
+            "interface": "etcd",
+            "scope": "global"
+          },
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "etcd",
+            "scope": "global"
+          }
+        ]
+      },
+      "units": {
+        "etcd/0": {
+          "workload-status": {
+            "current": "active",
+            "message": "Healthy with 1 known peer",
+            "since": "23 Mar 2024 13:07:06-06:00"
+          },
+          "juju-status": {
+            "current": "idle",
+            "since": "23 Mar 2024 13:30:36-06:00",
+            "version": "3.1.5"
+          },
+          "leader": true,
+          "machine": "0",
+          "open-ports": [
+            "2379/tcp"
+          ],
+          "public-address": "10.118.249.243"
+        }
+      },
+      "version": "3.4.22",
+      "endpoint-bindings": {
+        "": "alpha",
+        "certificates": "alpha",
+        "cluster": "alpha",
+        "db": "alpha",
+        "grafana": "alpha",
+        "nrpe-external-master": "alpha",
+        "prometheus": "alpha",
+        "proxy": "alpha"
+      }
+    },
+    "kubernetes-control-plane": {
+      "charm": "kubernetes-control-plane",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "kubernetes-control-plane",
+      "charm-rev": 416,
+      "charm-channel": "stable",
+      "charm-profile": "juju-jockey-kubernetes-control-plane-416",
+      "exposed": true,
+      "application-status": {
+        "current": "active",
+        "since": "23 Mar 2024 13:31:34-06:00"
+      },
+      "relations": {
+        "certificates": [
+          {
+            "related-application": "easyrsa",
+            "interface": "tls-certificates",
+            "scope": "global"
+          }
+        ],
+        "cni": [
+          {
+            "related-application": "calico",
+            "interface": "kubernetes-cni",
+            "scope": "container"
+          }
+        ],
+        "container-runtime": [
+          {
+            "related-application": "containerd",
+            "interface": "container-runtime",
+            "scope": "container"
+          }
+        ],
+        "coordinator": [
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "coordinator",
+            "scope": "global"
+          }
+        ],
+        "etcd": [
+          {
+            "related-application": "etcd",
+            "interface": "etcd",
+            "scope": "global"
+          }
+        ],
+        "kube-control": [
+          {
+            "related-application": "kubernetes-worker",
+            "interface": "kube-control",
+            "scope": "global"
+          }
+        ],
+        "peer": [
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "kubernetes-control-plane-peer",
+            "scope": "global"
+          }
+        ]
+      },
+      "units": {
+        "kubernetes-control-plane/0": {
+          "workload-status": {
+            "current": "active",
+            "since": "23 Mar 2024 13:31:34-06:00"
+          },
+          "juju-status": {
+            "current": "idle",
+            "since": "23 Mar 2024 13:31:34-06:00",
+            "version": "3.1.5"
+          },
+          "leader": true,
+          "machine": "0",
+          "open-ports": [
+            "6443/tcp"
+          ],
+          "public-address": "10.118.249.243",
+          "subordinates": {
+            "calico/1": {
+              "workload-status": {
+                "current": "blocked",
+                "message": "ignore-loose-rpf config is in conflict with rp_filter value",
+                "since": "23 Mar 2024 13:31:36-06:00"
+              },
+              "juju-status": {
+                "current": "idle",
+                "since": "23 Mar 2024 13:31:36-06:00",
+                "version": "3.1.5"
+              },
+              "public-address": "10.118.249.243"
+            },
+            "containerd/1": {
+              "workload-status": {
+                "current": "blocked",
+                "message": "May need reboot to activate GPU.",
+                "since": "23 Mar 2024 13:08:51-06:00"
+              },
+              "juju-status": {
+                "current": "idle",
+                "since": "23 Mar 2024 13:31:37-06:00",
+                "version": "3.1.5"
+              },
+              "public-address": "10.118.249.243"
+            }
+          }
+        }
+      },
+      "version": "1.29.3",
+      "endpoint-bindings": {
+        "": "alpha",
+        "aws": "alpha",
+        "ceph-client": "alpha",
+        "certificates": "alpha",
+        "cni": "alpha",
+        "container-runtime": "alpha",
+        "coordinator": "alpha",
+        "cos-agent": "alpha",
+        "dns-provider": "alpha",
+        "etcd": "alpha",
+        "external-cloud-provider": "alpha",
+        "ha": "alpha",
+        "keystone-credentials": "alpha",
+        "kube-control": "alpha",
+        "loadbalancer-external": "alpha",
+        "loadbalancer-internal": "alpha",
+        "peer": "alpha",
+        "tokens": "alpha",
+        "vault-kv": "alpha"
+      }
+    },
+    "kubernetes-worker": {
+      "charm": "kubernetes-worker",
+      "base": {
+        "name": "ubuntu",
+        "channel": "22.04"
+      },
+      "charm-origin": "charmhub",
+      "charm-name": "kubernetes-worker",
+      "charm-rev": 198,
+      "charm-channel": "stable",
+      "charm-version": "2a7b3a5",
+      "exposed": true,
+      "application-status": {
+        "current": "active",
+        "since": "23 Mar 2024 13:15:47-06:00"
+      },
+      "relations": {
+        "certificates": [
+          {
+            "related-application": "easyrsa",
+            "interface": "tls-certificates",
+            "scope": "global"
+          }
+        ],
+        "cni": [
+          {
+            "related-application": "calico",
+            "interface": "kubernetes-cni",
+            "scope": "container"
+          }
+        ],
+        "container-runtime": [
+          {
+            "related-application": "containerd",
+            "interface": "container-runtime",
+            "scope": "container"
+          }
+        ],
+        "coordinator": [
+          {
+            "related-application": "kubernetes-worker",
+            "interface": "coordinator",
+            "scope": "global"
+          }
+        ],
+        "kube-control": [
+          {
+            "related-application": "kubernetes-control-plane",
+            "interface": "kube-control",
+            "scope": "global"
+          }
+        ]
+      },
+      "units": {
+        "kubernetes-worker/0": {
+          "workload-status": {
+            "current": "active",
+            "since": "23 Mar 2024 13:15:47-06:00"
+          },
+          "juju-status": {
+            "current": "idle",
+            "since": "23 Mar 2024 13:15:52-06:00",
+            "version": "3.1.5"
+          },
+          "leader": true,
+          "machine": "1",
+          "open-ports": [
+            "80/tcp",
+            "443/tcp"
+          ],
+          "public-address": "10.118.249.130",
+          "subordinates": {
+            "calico/0": {
+              "workload-status": {
+                "current": "blocked",
+                "message": "ignore-loose-rpf config is in conflict with rp_filter value",
+                "since": "23 Mar 2024 13:33:01-06:00"
+              },
+              "juju-status": {
+                "current": "idle",
+                "since": "23 Mar 2024 13:12:05-06:00",
+                "version": "3.1.5"
+              },
+              "leader": true,
+              "public-address": "10.118.249.130"
+            },
+            "containerd/0": {
+              "workload-status": {
+                "current": "blocked",
+                "message": "containerd resource binary containerd-stress failed a version check",
+                "since": "23 Mar 2024 13:32:54-06:00"
+              },
+              "juju-status": {
+                "current": "idle",
+                "since": "23 Mar 2024 13:12:02-06:00",
+                "version": "3.1.5"
+              },
+              "leader": true,
+              "public-address": "10.118.249.130"
+            }
+          }
+        }
+      },
+      "version": "1.29.3",
+      "endpoint-bindings": {
+        "": "alpha",
+        "aws": "alpha",
+        "certificates": "alpha",
+        "cni": "alpha",
+        "container-runtime": "alpha",
+        "coordinator": "alpha",
+        "cos-agent": "alpha",
+        "kube-control": "alpha",
+        "tokens": "alpha"
+      }
+    }
+  },
+  "storage": {},
+  "controller": {
+    "timestamp": "13:34:27-06:00"
+  }
+}

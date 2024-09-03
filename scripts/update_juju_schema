@@ -7,16 +7,16 @@ __author__ = "John Lettman"
 __email__ = "the@johnlettman.com"
 __license__ = "MIT"
 
+from argparse import ArgumentParser, Namespace
 import json
 import logging
 import os
 import random
 import re
+from subprocess import PIPE, Popen
 import sys
-from argparse import Namespace, ArgumentParser
-from subprocess import Popen, PIPE
 from tempfile import TemporaryDirectory
-from typing import Optional, Any, Dict, Generator, NamedTuple, cast, Union
+from typing import Any, Dict, Generator, NamedTuple, Optional, Union, cast
 
 import jsonschema_gentypes
 from jsonschema_gentypes import jsonschema_draft_04, jsonschema_draft_2019_09_meta_data, normalize
@@ -25,6 +25,7 @@ from jsonschema_gentypes.api_draft_04 import APIv4
 from jsonschema_gentypes.api_draft_2019_09 import APIv201909
 from jsonschema_gentypes.cli import process_config
 from jsonschema_gentypes.configuration import Configuration, GenerateItem
+
 
 DEFAULT_ALLOW_LIST = ["full_status"]
 
@@ -61,9 +62,9 @@ def new_ref_to_proposed_name(self, ref: str) -> str:
     ref_proposed_name = ref
 
     if ref.startswith("#/$defs/"):
-        ref_proposed_name = ref[len("#/$defs/"):]
+        ref_proposed_name = ref[len("#/$defs/") :]
     elif ref.startswith("#/"):
-        ref_proposed_name = ref[len("#/"):]
+        ref_proposed_name = ref[len("#/") :]
     if "/" in ref_proposed_name:
         ref_proposed_name = ref_proposed_name.replace("/", " ")
 
@@ -71,22 +72,22 @@ def new_ref_to_proposed_name(self, ref: str) -> str:
 
 
 def new_get_name(
-        schema: Optional[
-            Union[
-                jsonschema_draft_04.JSONSchemaD4,
-                jsonschema_draft_2019_09_meta_data.JSONSchemaItemD2019,
-            ]
-        ],
-        proposed_name: Optional[str] = None,
-        _1: bool = True,
-        _2: Optional[str] = None,
-        postfix: Optional[str] = None,
+    schema: Optional[
+        Union[
+            jsonschema_draft_04.JSONSchemaD4,
+            jsonschema_draft_2019_09_meta_data.JSONSchemaItemD2019,
+        ]
+    ],
+    proposed_name: Optional[str] = None,
+    _1: bool = True,
+    _2: Optional[str] = None,
+    postfix: Optional[str] = None,
 ) -> str:
     # Get the base name
     has_title = isinstance(schema, dict) and "title" in schema
     name = schema["title"] if has_title else proposed_name  # type: ignore
     assert name is not None
-    name = normalize(name) # type: ignore
+    name = normalize(name)  # type: ignore
 
     prefix = "" if has_title else "_"
     rand = str(random.randint(0, 9999)) if name != "Root" else ""  # nosec
@@ -103,6 +104,7 @@ def new_get_name(
     jsonschema_gentypes.get_name.__dict__["names"].add(output)
     return output
 
+
 def new_api_get_name(
     self,
     schema: Optional[
@@ -117,6 +119,7 @@ def new_api_get_name(
 ) -> str:
     return new_get_name(schema, proposed_name, upper, self.get_name_properties, postfix=postfix)
 
+
 API.get_name = new_api_get_name
 APIv201909.ref_to_proposed_name = new_ref_to_proposed_name
 APIv4.ref_to_proposed_name = new_ref_to_proposed_name
@@ -124,7 +127,7 @@ jsonschema_gentypes.get_name = new_get_name
 
 
 def schemagen() -> Any:
-    command = ['go', 'run', SCHEMAGEN]
+    command = ["go", "run", SCHEMAGEN]
     logger.info("Running schemagen: %s", command)
 
     process = Popen(command, cwd=SCHEMAGEN_DIR, stdout=PIPE)
@@ -134,8 +137,8 @@ def schemagen() -> Any:
 
 
 def camel_to_snake(name: str) -> str:
-    name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', name)
-    name = re.sub('([A-Z]+)([A-Z][a-z])', r'\1_\2', name)
+    name = re.sub("([a-z0-9])([A-Z])", r"\1_\2", name)
+    name = re.sub("([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
     return name.lower()
 
 
@@ -163,20 +166,19 @@ def emit_definitions(definitions: Dict[str, Any], output_dir: str) -> Generator[
             "$schema": SCHEMA_HEADER,
             "title": key,
             "definitions": {
-                k: {
-                    "type": "object",
-                    "$ref": f"{os.path.join(output_dir, camel_to_snake(k) + '.json')}"
-                } for k in definitions
+                k: {"type": "object", "$ref": f"{os.path.join(output_dir, camel_to_snake(k) + '.json')}"}
+                for k in definitions
             },
-            **value
+            **value,
         }
 
         with open(output_file_path, "w") as f:
             logger.info("Emitting %s", output_file_name)
             json.dump(schema, f, indent=4)
 
-        yield DefinitionResult(key, module_name, output_module_name, output_module_path, output_file_name,
-                               output_file_path)
+        yield DefinitionResult(
+            key, module_name, output_module_name, output_module_path, output_file_name, output_file_path
+        )
 
 
 def parse_args(argv: Optional[list[str]]) -> Namespace:
@@ -184,10 +186,16 @@ def parse_args(argv: Optional[list[str]]) -> Namespace:
         argv = sys.argv[1:]
 
     parser = ArgumentParser(prog="update_juju_schema", description=__doc__)
-    parser.add_argument("-v", "--verbose", dest="verbosity", action="count", default=0,
-                        help="Verbosity (between 1-4 occurrences with more leading to more "
-                             "verbose logging). CRITICAL=0, ERROR=1, WARN=2, INFO=3, "
-                             "DEBUG=4")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        dest="verbosity",
+        action="count",
+        default=0,
+        help="Verbosity (between 1-4 occurrences with more leading to more "
+        "verbose logging). CRITICAL=0, ERROR=1, WARN=2, INFO=3, "
+        "DEBUG=4",
+    )
 
     return parser.parse_args(argv)
 
@@ -205,12 +213,18 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         emitted_file_paths = map(lambda result: result.output_file_path, results)
         filtered_results = filter(
-            lambda result: result.title in DEFAULT_ALLOW_LIST or result.module_name in DEFAULT_ALLOW_LIST,
-            results)
-        generate = map(lambda result: cast(GenerateItem, {
-            "source": result.output_file_path,
-            "destination": result.output_module_path,
-        }), filtered_results)
+            lambda result: result.title in DEFAULT_ALLOW_LIST or result.module_name in DEFAULT_ALLOW_LIST, results
+        )
+        generate = map(
+            lambda result: cast(
+                GenerateItem,
+                {
+                    "source": result.output_file_path,
+                    "destination": result.output_module_path,
+                },
+            ),
+            filtered_results,
+        )
 
         config: Configuration = {"generate": list(generate)}
         logger.info("Using configuration %s", config)

@@ -7,7 +7,7 @@ from orjson import loads as json_loads
 import pytest
 
 from jockey.objects import FullStatus, Object
-from tests.util import SAMPLES_DIR
+from tests.test_util import SAMPLES_DIR
 
 
 @pytest.mark.parametrize(
@@ -138,7 +138,7 @@ def test_object_parse_bad_name():
 )
 def test_object_collect(obj: Object, sample: str, names: set[str]):
     sample_path = os.path.join(SAMPLES_DIR, sample)
-    with open(sample_path, "r") as f:
+    with open(sample_path) as f:
         sample_status: FullStatus = json_loads(f.read())
 
     got = obj.collect(sample_status)

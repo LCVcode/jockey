@@ -23,7 +23,6 @@ from jockey.filters import (
 
 
 class TestLogFilterActionDecorator(TestCase):
-
     def test_action_function_is_called(self):
         # create mock action function
         mock_action = Mock()

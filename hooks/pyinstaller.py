@@ -1,5 +1,5 @@
-import shutil
 from pathlib import Path
+import shutil
 
 
 def post_build(interface) -> None:
@@ -15,9 +15,7 @@ def post_build(interface) -> None:
 
         shutil.move(f"{source}", f"{destination}")
         interface.write_line(
-            f"    - Updated "
-            f"<success>{source}</success> -> "
-            f"<success>{destination}</success>"
+            f"    - Updated " f"<success>{source}</success> -> " f"<success>{destination}</success>",
         )
 
     interface.write_line("  - <b>Cleaning</b>")

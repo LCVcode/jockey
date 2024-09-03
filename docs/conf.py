@@ -9,7 +9,9 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src'))
+
+
+sys.path.insert(0, os.path.abspath("../src"))
 
 github_username = "LCVcode"
 github_repository = "jockey"
@@ -25,10 +27,14 @@ extensions = [
     "sphinx.ext.todo",
     "autoapi.extension",
     "myst_parser",
-    "canonical_sphinx"
+    "canonical_sphinx",
 ]
-templates_path = [ "_templates",]
-html_static_path = [ "_static",]
+templates_path = [
+    "_templates",
+]
+html_static_path = [
+    "_static",
+]
 source_suffix = ".rst"
 master_doc = "index"
 html_theme = "canonical_sphinx"
@@ -59,7 +65,7 @@ html_context = {
     # Add your product tag (the orange part of your logo, will be used in the
     # header) to ".sphinx/_static" and change the path here (start with "_static")
     # (default is the circle of friends)
-    #"product_tag": "",
+    # "product_tag": "",
     # Change to the discourse instance you want to be able to link to
     # using the :discourse: metadata at the top of a file
     # (use an empty value if you don't want to link)
@@ -84,7 +90,10 @@ html_context = {
 html_theme_options = {
     "light_css_variables": {
         "color-sidebar-background-border": "none",
-        "font-stack": "Ubuntu, -apple-system, Segoe UI, Roboto, Oxygen, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif",
+        "font-stack": (
+            "Ubuntu, -apple-system, Segoe UI, Roboto, Oxygen, Cantarell, "
+            "Fira Sans, Droid Sans, Helvetica Neue, sans-serif"
+        ),
         "font-stack--monospace": "Ubuntu Mono, Consolas, Monaco, Courier, monospace",
         "color-foreground-primary": "#111",
         "color-foreground-secondary": "var(--color-foreground-primary)",
@@ -110,7 +119,7 @@ html_theme_options = {
         "color-highlighted-background": "#EbEbEb",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#772953"
+        "color-version-popup": "#772953",
     },
     "dark_css_variables": {
         "color-foreground-secondary": "var(--color-foreground-primary)",
@@ -134,11 +143,11 @@ html_theme_options = {
         "color-highlighted-background": "#666",
         "color-link-underline": "var(--color-background-primary)",
         "color-link-underline--hover": "var(--color-background-primary)",
-        "color-version-popup": "#F29879"
+        "color-version-popup": "#F29879",
     },
 }
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/{.major}'.format(sys.version_info), None),
-    'dotty_dict': ('https://dotty-dict.readthedocs.io/en/latest/', None),
+    "python": ("https://docs.python.org/{.major}".format(sys.version_info), None),
+    "dotty_dict": ("https://dotty-dict.readthedocs.io/en/latest/", None),
 }

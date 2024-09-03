@@ -3,7 +3,7 @@
 The intent of this macro is to replace the autoapisummary directive with the following
 improvements:
 1) Method signature is generated without typing annotation regardless of the value of
-   `autodoc_typehints`
+   autodoc_typehints
 2) Properties are treated like attribute (but labelled as properties).
 3) Label are added as summary prefix to indicate if the member is a property, class
    method, or static method.
@@ -15,8 +15,8 @@ License: MIT
 {# Renders an object's name with a proper reference and optional signature.
 
 The signature is re-generated from obj.obj.args, which is undocumented but is the
-only way to have a type-less signature if `autodoc_typehints` is `signature` or
-`both`. #}
+only way to have a type-less signature if autodoc_typehints is signature or
+both. #}
 {% macro _render_item_name(obj, sig=False) -%}
 :py:obj:`{{ obj.name }} <{{ obj.id }}>`
      {%- if sig -%}

@@ -121,7 +121,6 @@ class Cloud(Connection, Context):
         *args,
         **kwargs,
     ):
-
         self.doas = doas
         self.juju = juju or "juju"
         self.cache = cache or FileCache()
