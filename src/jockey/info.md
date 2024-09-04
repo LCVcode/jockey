@@ -1,67 +1,64 @@
 
-
-
 ## Objects
-### Supported
-_Jockey_ supports querying the following Juju objects:
+### Supported Objects
+_Jockey_ allows querying of the following **Juju** objects:
 
-- **Application:** An [application][juju-application] is a running abstraction of a charm in the Juju model. It is the sum of all units of a given charm with the same name.
-- **Unit:** In Juju, a [unit][juju-unit] is a deployed [charm][juju-charm]. An **application's** units occupy [machines][juju-machine].
-- **Machine:** In Juju, a [machine][juju-machine] is any instance requested explicitly (via `juju add-machine`) or implicitly (e.g., `juju bootstrap`, `juju deploy`, `juju add-unit`) from a [cloud][juju-cloud] environment.
+- **Application:** An [application][juju-application] is a running abstraction of a charm in the Juju model. It represents the sum of all units of a given charm with the same name.
+- **Unit:** A [unit][juju-unit] in Juju is a deployed instance of a [charm][juju-charm]. Units of an **application** reside on [machines][juju-machine].
+- **Machine:** A [machine][juju-machine] in Juju is any instance requested explicitly (via `juju add-machine`) or implicitly (e.g., `juju bootstrap`, `juju deploy`, `juju add-unit`) from a [cloud][juju-cloud] environment.
 
-### Aliases
-When querying Juju objects, _Jockey_ provides numerous shorthand aliases to help make operations swifter.
+### Aliases for Objects
 
-The following aliases resolve to their respective Juju objects:
+To simplify operations, _Jockey_ supports shorthand aliases for Juju objects. These aliases can be used in place of the full object names:
 
-- **Application:** application, applications, app, apps, a
-- **Unit:** unit, units, u
-- **Machine:** machine, machines, m
+- **Application:** `application`, `applications`, `app`, `apps`, `a`
+- **Unit:** `unit`, `units`, `u`
+- **Machine:** `machine`, `machines`, `m`
 
-## Filtering
-### Expressions
-**Filter expressions** have a three-part syntax:
+## Filters
+### Filter Expressions
+_Filter expressions_ follow a structured syntax:
 ```
 <OBJECT>(.FIELD)<FILTER><QUERY>
 ```
 
-The syntax elements are:
-- `OBJECT`: any supported [Juju object type](#supported) or their [equivalent aliases](#aliases).
-- `.FIELD`: specifies the field within the object to filter against.
-- `FILTER`: specifies how Jockey should filter Juju objects relative to `QUERY`.
-- `QUERY`: the value Jockey will compare with the value resolved by `OBJECT` and `.FIELD`.
+Where:
+- `OBJECT`: A supported [Juju object](#objects) or its [alias](#aliases-for-objects).
+- `.FIELD`: Specifies the field within the object to filter against.
+- `FILTER`: Determines how _Jockey_ should filter the objects relative to `QUERY`.
+- `QUERY`: The value to compare with the resolved value of `OBJECT` and `.FIELD`.
 
-### Filters
-The `FILTER` part of the [filter expression](#expressions) is a token to select the filtering action. _Jockey_ supports an extensive suite of filtering actions:
+### Supported Filters
+The `FILTER` part of a [filter expression](#filter-expressions) determines the action to perform. _Jockey_ supports the following filtering actions:
 
-| Token(s)  | Name       | Description |
-|-----------|------------|-------------|
-| `==`, `=` | Equals     | Check for equality between values |
-| `^=`, `!=` | Not Equals | Check for inequality between values |
-| `%` | Regular Expression | Match against a regular expression |
-| `^%`, `!%` | Not Regular Expression | Ensure a value does not match a regular expression |
-| `>` | Greater Than | Check if a value is greater than another |
-| `>=`, `=>` | Greater Than or Equals | Check if a value is greater than or equal to another |
-| `<` | Less Than | Check if a value is less than another |
-| `<=`, `=<` | Less Than or Equals | Check if a value is less than or equal to another |
-| `~` | Contains | Check if a value contains another. |
-| `!~`, `^~` | Not Contains | Check if a value does not contain another |
+| Token(s)   | Action                  | Description                                    |
+|------------|-------------------------|------------------------------------------------|
+| `==`, `=`  | Equals                  | Check if values are equal                      |
+| `^=`, `!=` | Not Equals              | Check if values are not equal                  |
+| `%`        | Regular Expression      | Match against a regular expression             |
+| `^%`, `!%` | Not Regular Expression   | Ensure a value does not match a regular expression |
+| `>`        | Greater Than            | Check if a value is greater than another       |
+| `>=`, `=>` | Greater Than or Equals   | Check if a value is greater than or equal to another |
+| `<`        | Less Than               | Check if a value is less than another          |
+| `<=`, `=<` | Less Than or Equals      | Check if a value is less than or equal to another |
+| `~`        | Contains                | Check if a value contains another              |
+| `!~`, `^~` | Not Contains            | Check if a value does not contain another      |
 
-For example, the following expression selects items where the hostname contains "juju":
-```
-'hostname~juju'
-```
+#### Examples:
+- **Contains filter**: Select items where the hostname contains "juju":
+    ```bash
+    juju-jockey machine 'hostname~juju'
+    ```
 
-Alternatively, this expression uses a regular expression to find hostnames that contain either "juju" or "metal":
-```
-'hostname%juju|metal'
-```
+- **Regular expression filter**: Match hostnames that contain either "juju" or "metal":
+    ```bash
+    juju-jockey machine 'hostname%juju|metal'
+    ```
 
-## Fields
-Each Juju object contains one or more fields that you may use in a filter expression or the output.
+## Object Fields
+Each Juju object has various fields that can be used in filter expressions or specified for output.
 
-_Jockey_ exposes these fields through "dot notation."
-For  demonstration, assume we have a unit like this:
+Fields are accessed through **dot notation**. Consider the following example unit:
 
 ```python
 unit = {
@@ -81,37 +78,42 @@ unit = {
 }
 ```
 
-We can filter based on deeply nested values:
+### Filtering Based on Fields
+You can filter objects based on deeply nested field values.
+For example, to filter units whose `juju-status` is `idle`:
 ```bash
 juju-jockey unit juju-status.current==idle
 ```
 
-We can also output specific fields from the unit after filtering:
+### Specifying Output Fields
+To output specific fields after filtering, simply specify the field(s) you're interested in:
 ```bash
 juju-jockey unit.machine juju-status.current==idle
 ```
 
-By default, when specifying the application without a field expression, _Jockey_ will output the name of each object. You can output all fields by placing a single `.` after the name of the object:
-```bash
-juju-jockey unit. juju-status.current==idle
-```
+By default, when querying an application without specifying a field, _Jockey_ outputs the name of the object.
+To output **all fields** of an object, use a single `.` after the object name:
 
-### Virtual fields
-While querying fields on a single object is helpful, _Jockey_ takes it further. It resolves relationships between objects through **virtual fields**. These particular fields typically start with an "at" symbol (`@`).
 
-Virtual fields are not included in the output due to the potential for infinite loops (e.g., unit to machine to units to machine).
+### Virtual Fields
+_Virtual fields_ allow you to traverse relationships between objects.
+These fields typically start with the `@` symbol and allow you to reference related objects.
 
-As an example of virtual field traversal, you can filter upon values in the machine related to a unit:
+For instance, you can filter units based on values from their associated machine:
 ```bash
 juju-jockey units unit.@machine.hostname~juju
 ```
 
-You can list the available virtual fields by accessing the `@` field:
+```{note}
+Virtual fields are not included in output due to potential recursive loops
+(e.g., unit → machine → unit → machine).
+```
+
+#### Listing Virtual Fields
+To see all available virtual fields for an object, query the `@` field:
 ```bash
 juju-jockey unit.@
 ```
-
-
 
 [juju-cloud]: https://juju.is/docs/juju/cloud
 [juju-charm]: https://juju.is/docs/juju/charmed-operator

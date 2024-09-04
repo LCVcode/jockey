@@ -72,7 +72,7 @@ def info() -> Markdown:
 
 def print_info(console: Optional[Console] = None) -> None:
     if not console:
-        console = Console()
+        console = Console(width=120)
 
     console.print(info())
 
