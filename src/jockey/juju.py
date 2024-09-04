@@ -125,9 +125,10 @@ class Application(Wrapper):
         :param juju_status: The :class:`full_status.FullStatus` data structure.
         :return: A generator of :class:`Application` objects representing each application.
         """
-        for name in juju_status["applications"].keys():
-            logger.debug("Found application: %r", name)
-            yield Application(juju_status, name)
+        if "applications" in juju_status:
+            for name in juju_status["applications"].keys():
+                logger.debug("Found application: %r", name)
+                yield Application(juju_status, name)
 
     @staticmethod
     def name_from_unit_name(unit_name: str) -> str:
@@ -328,8 +329,9 @@ class Machine(Wrapper):
         :param juju_status: The :class:`full_status.FullStatus` data structure.
         :return: A generator of :class:`JujuMachineStatus` objects representing each machine.
         """
-        for name in juju_status["machines"]:
-            yield Machine(juju_status, name)
+        if "machines" in juju_status:
+            for name in juju_status["machines"]:
+                yield Machine(juju_status, name)
 
     @staticmethod
     def id_is_container(machine_name: str) -> bool:

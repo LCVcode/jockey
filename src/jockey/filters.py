@@ -207,34 +207,34 @@ class FilterMode(Enum):
     """
 
     EQUALS = FilterType({"==", "="}, "equals", equals_filter)
-    """Checks that checks for equality between values."""
+    """Check for equality between values."""
 
     NOT_EQUALS = FilterType({"^=", "!="}, "not equals", not_equals_filter)
-    """Checks for inequality between values."""
+    """Check for inequality between values."""
 
     REGEX = FilterType({"%"}, "regex", regex_filter)
-    """Matches a value against a regular expression."""
+    """Match a value against a regular expression."""
 
     NOT_REGEX = FilterType({"^%", "!%"}, "not regex", not_regex_filter)
-    """Ensures a value does not match a regular expression."""
+    """Ensure a value does not match a regular expression."""
 
     GREATER_THAN = FilterType({">"}, "greater than", greater_than_filter)
-    """Checks if a value is greater than another."""
+    """Check if a value is greater than another."""
 
     GREATER_THAN_OR_EQUALS = FilterType({">=", "=>"}, "greater than or equals", greater_than_or_equals_filter)
-    """Checks if a value is greater than or equal to another."""
+    """Check if a value is greater than or equal to another."""
 
     LESS_THAN = FilterType({"<"}, "less than", less_than_filter)
-    """Checks if a value is less than another."""
+    """Check if a value is less than another."""
 
     LESS_THAN_OR_EQUALS = FilterType({"<=", "=<"}, "less than or equals", less_than_or_equals_filter)
-    """Checks if a value is less than or equal to another."""
+    """Check if a value is less than or equal to another."""
 
     CONTAINS = FilterType({"~"}, "contains", contains_filter)
-    """Checks if a value contains another."""
+    """Check if a value contains another."""
 
     NOT_CONTAINS = FilterType({"!~", "^~"}, "not contains", not_contains_filter)
-    """Checks if a value does not contain another."""
+    """Check if a value does not contain another."""
 
     def __str__(self) -> str:
         return self.value.name

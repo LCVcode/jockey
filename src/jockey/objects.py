@@ -18,7 +18,6 @@ Examples
     applications = obj_type.collect(status)
 """
 
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Iterable, Optional
 
@@ -30,27 +29,16 @@ ObjectCollector = Callable[[FullStatus], Iterable[Any]]
 """A type alias representing a function that collects objects from the Juju :class:`full_status.FullStatus`."""
 
 
-@dataclass
-class ObjectType:
-    """Represents a Juju object type with its associated collector function and possible names."""
-
-    names: set[str]
-    """A set of strings representing the possible names or aliases of the Juju object."""
-
-    collector: ObjectCollector
-    """An :type:`ObjectCollector` that collects the objects of this type from a :class:`full_status.FullStatus`."""
-
-
 class Object(Enum):
     """An enumeration of different Juju object types, such as applications, units, and machines."""
 
-    APPLICATION = ObjectType({"applications", "app", "apps", "application", "a"}, Application.from_juju_status)
+    APPLICATION = Application
     """Represents Juju applications and their associated collector."""
 
-    UNIT = ObjectType({"units", "unit", "u"}, Unit.from_juju_status)
+    UNIT = Unit
     """Represents Juju units and their associated collector."""
 
-    MACHINE = ObjectType({"machines", "machine", "m"}, Machine.from_juju_status)
+    MACHINE = Machine
     """Represents Juju machines and their associated collector."""
 
     def __str__(self) -> str:
@@ -80,7 +68,7 @@ class Object(Enum):
         :return: A set of all tokens corresponding to the Juju object types.
         """
 
-        return {token for obj in Object for token in obj.value.names}
+        return {token for obj in Object for token in obj.value.tokens}
 
     @staticmethod
     def names() -> set[str]:
@@ -103,7 +91,7 @@ class Object(Enum):
         obj_name = obj_name.lower()
 
         for obj in Object:
-            for name in obj.value.names:
+            for name in obj.value.tokens:
                 if name == obj_name:
                     return obj
 
@@ -134,7 +122,7 @@ class Object(Enum):
         :return: A :type:`list` of collected objects as :type:`dict`.
         :raises ValueError: If the :class:`ObjectType` collector is not callable.
         """
-        if not callable(self.value.collector):
-            raise ValueError("Object collector is not callable")
+        if not hasattr(self.value, "from_juju_status") or not callable(self.value.from_juju_status):
+            raise ValueError("Object 'from_juju_status' is not callable")
 
-        return list(self.value.collector(status))
+        return list(self.value.from_juju_status(status))

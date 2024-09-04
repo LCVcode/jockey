@@ -150,7 +150,7 @@ def test_object_collect(obj: Object, sample: str, names: set[str]):
 
 def test_object_collect_bad_collector():
     obj = Object.APPLICATION
-    obj.value.collector = 2
+    obj.value.from_juju_status = 2
 
     with pytest.raises(ValueError):
         Object.collect(
