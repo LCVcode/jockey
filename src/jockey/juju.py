@@ -117,6 +117,12 @@ class Application(Wrapper):
 
         return super().__getitem__(key)
 
+    def __eq__(self, other):
+        return isinstance(other, Application) and super().__eq__(other)
+
+    def __ne__(self, other):
+        return not isinstance(other, Application) or super().__ne__(other)
+
     @staticmethod
     def from_juju_status(juju_status: JujuStatus) -> Generator["Application", None, None]:
         """
@@ -230,6 +236,12 @@ class Unit(Wrapper):
 
         return super().__getitem__(key)
 
+    def __eq__(self, other):
+        return isinstance(other, Unit) and super().__eq__(other)
+
+    def __ne__(self, other):
+        return not isinstance(other, Unit) or super().__ne__(other)
+
     @staticmethod
     def from_juju_status(juju_status: JujuStatus) -> Generator["Unit", None, None]:
         """
@@ -320,6 +332,12 @@ class Machine(Wrapper):
             return self.is_container
 
         return super().__getitem__(key)
+
+    def __eq__(self, other):
+        return isinstance(other, Machine) and super().__eq__(other)
+
+    def __ne__(self, other):
+        return not isinstance(other, Machine) or super().__ne__(other)
 
     @staticmethod
     def from_juju_status(juju_status: JujuStatus) -> Generator["Machine", None, None]:
