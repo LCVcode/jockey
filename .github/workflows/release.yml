@@ -4,8 +4,6 @@ concurrency: release
 env:
   BOT_NAME: Jockey Release Bot
   BOT_EMAIL: jockey-release@users.noreply.github.com
-  BRANCH_STAGING: staging
-  BRANCH_RELEASE: release
   CHGLOG_VERSION: 0.15.4
 
 on:
