@@ -46,7 +46,7 @@ flake8-bugbear = "^24.8.19"
 pytest = "^8.0.0"
 coverage = "^7.0.0"
 pytest-cov = "^5.0.0"
-poetry-pyinstaller-plugin = "^1.1.15"
+poetry-pyinstaller-plugin = "^1.1.17"
 pdoc = "^14.6.0"
 pytest-md-report = "^0.6.2"
 sphinx = "<8"
@@ -59,6 +59,7 @@ sphinx-autoapi = "^3.3.1"
 types-paramiko = "^3.4.0.20240423"
 types-regex = "^2024.7.24.20240726"
 pytest-timeout = "^2.3.1"
+commitizen = "^3.29.0"
 
 [tool.coverage.run]
 branch = true
@@ -144,11 +145,16 @@ version = "6.7.0"
 # disable compression
 disable-upx = true
 
-# ran after all builds are done
-post-build = "hooks.pyinstaller:post_build"
-
 [tool.poetry-pyinstaller-plugin.scripts]
 juju-jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
+
+[tool.commitizen]
+tag_format = "v$version"
+version_files = [
+    "pyproject.toml:version",
+    "src/jockey/__init__.py"
+]
+bump_message = "bump: $current_version -> $new_version [skip ci]"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
