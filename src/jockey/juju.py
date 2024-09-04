@@ -278,6 +278,21 @@ class Machine(Wrapper):
 
     tokens: ClassVar[set[str]] = {"machines", "machine", "m"}
 
+    virtual_fields = {
+        "@name",
+        "name",
+        "@tokens",
+        "@status",
+        "@id",
+        "@machine-id",
+        "@parent-id",
+        "@parent-name",
+        "@parent",
+        "@has-containers",
+        "@containers",
+        "@is-container",
+    }
+
     def __getitem__(self, key) -> object:
         if key == "@id" or key == "@machine-id":
             return self.name
@@ -287,6 +302,12 @@ class Machine(Wrapper):
 
         if key == "@parent":
             return self.parent
+
+        if key == "@has-containers":
+            return self.has_containers
+
+        if key == "@containers":
+            return self.containers
 
         if key == "@is-container":
             return self.is_container
@@ -320,6 +341,16 @@ class Machine(Wrapper):
             return self.juju_status["machines"][self.parent_name]["containers"][self.name]
         else:
             return self.juju_status["machines"][self.name]
+
+    @property
+    def has_containers(self) -> bool:
+        return not self.is_container and "containers" in self.status and len(self.status["containers"]) > 0
+
+    @property
+    def containers(self) -> Generator["Machine", None, None]:
+        if self.has_containers:
+            for container_name in self.status["containers"]:
+                yield Machine(self.juju_status, container_name)
 
     @property
     def parent_name(self) -> str:
