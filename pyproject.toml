@@ -76,7 +76,7 @@ addopts = [
     "--import-mode=importlib",
 ]
 md_report = true
-md_report_verbose = 1
+md_report_verbose = 0
 md_report_color = "auto"
 md_report_flavor = "gfm"
 md_report_output = ".github-test-report.md"
