@@ -43,6 +43,7 @@ jobs:
         git config user.name "${{ env.BOT_NAME }}"
         git config user.email "${{ env.BOT_EMAIL }}"
     - name: Install Python toolchain
+      uses: actions/setup-python@v5
       with:
         python-version-file: .python-version
     - name: Install git-chglog
@@ -124,7 +125,8 @@ jobs:
       run: |
         ./git-chglog --template .chglog/RELEASE.tpl.md --output CHANGELOG-incremental.md ${{ env.new_tag }}
         cat CHANGELOG-incremental.md
-    - uses: actions/upload-artifact@v4
+    - name: Upload CHANGELOG-incremental
+      uses: actions/upload-artifact@v4
       with:
         name: CHANGELOG-incremental
         path: CHANGELOG-incremental.md
