@@ -56,6 +56,12 @@ class Wrapper(Mapping):
 
         self.status[key] = value
 
+    def __eq__(self, other):
+        return self.status == other.status
+
+    def __ne__(self, other):
+        return self.status != other.status
+
     def __iter__(self):
         return iter(self.status)
 
