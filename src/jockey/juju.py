@@ -77,7 +77,7 @@ class Wrapper(Mapping):
     @staticmethod
     @abstractmethod
     def from_juju_status(juju_status: JujuStatus) -> Iterable["Wrapper"]:
-        ...
+        yield Wrapper(juju_status, "")
 
     @property
     def status(self) -> Any:
