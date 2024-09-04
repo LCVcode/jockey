@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Iterable, Optional
 
-from jockey.juju import all_applications, all_machines, all_units
+from jockey.juju import Application, Machine, Unit
 from jockey.juju_schema.full_status import FullStatus
 
 
@@ -44,13 +44,13 @@ class ObjectType:
 class Object(Enum):
     """An enumeration of different Juju object types, such as applications, units, and machines."""
 
-    APPLICATION = ObjectType({"applications", "app", "apps", "application", "a"}, all_applications)
+    APPLICATION = ObjectType({"applications", "app", "apps", "application", "a"}, Application.from_juju_status)
     """Represents Juju applications and their associated collector."""
 
-    UNIT = ObjectType({"units", "unit", "u"}, all_units)
+    UNIT = ObjectType({"units", "unit", "u"}, Unit.from_juju_status)
     """Represents Juju units and their associated collector."""
 
-    MACHINE = ObjectType({"machines", "machine", "m"}, all_machines)
+    MACHINE = ObjectType({"machines", "machine", "m"}, Machine.from_juju_status)
     """Represents Juju machines and their associated collector."""
 
     def __str__(self) -> str:

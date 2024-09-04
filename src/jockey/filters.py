@@ -4,10 +4,11 @@ from functools import wraps
 from logging import getLogger
 from typing import Any, Callable, Dict, Iterable
 
-from dotty_dictionary import dotty  # type: ignore[import-untyped]
+from dotty_dictionary import Dotty  # type: ignore[import-untyped]
 from regex import regex
 
 from jockey.abstractions import C_C, E_C, O_C, OE_C, C, T, uses_typevar_params
+from jockey.juju import Application, Machine, Unit
 
 
 logger = getLogger(__name__)
@@ -311,7 +312,7 @@ def wrap_filter_action(mode: FilterMode, field: str, query: str) -> WrappedFilte
     @wraps(action)
     def wrapped_filter_action(item: Dict) -> bool:
         try:
-            value = dotty(item)[field]
+            value = Dotty(item, mapping_types=(dict, Application, Unit, Machine))[field]
         except KeyError:
             logger.debug("Could not find field '%s', fast-failing filter", field)
             return False

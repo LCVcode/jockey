@@ -5,7 +5,7 @@ import os
 import sys
 from typing import Dict, List, Optional, Sequence
 
-from dotty_dictionary import dotty  # type: ignore[import-untyped]
+from dotty_dictionary import Dotty  # type: ignore[import-untyped]
 from orjson import loads as json_loads
 from rich import print
 from rich.console import Console
@@ -17,6 +17,7 @@ from jockey.__args__ import parse_args
 from jockey.cache import FileCache
 from jockey.cloud import Cloud, CloudCredentialsException
 from jockey.filters import parse_filter_expressions
+from jockey.juju import Application, Machine, Unit
 from jockey.objects import Object
 
 
@@ -152,7 +153,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         elif obj_field == "":
             print(item)
         else:
-            print(dotty(item)[obj_field])
+            print(Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_field])
 
     return 0
 
