@@ -10,27 +10,23 @@ from jockey import __issues__, __repository__, __version__
 logger = getLogger(__name__)
 
 
-epilog = (
+RICH_EPILOG = (
     f"[grey50]Version {__version__}[/] | "
     f"[dark_cyan][link={__repository__}]{__repository__}[/][/] | "
     f"[dark_cyan][link={__issues__}]{__issues__}[/][/]"
 )
 
-
-# TODO: ORIGINALLY PART OF INFO
-# examples = """
-# Examples:
-#   %(prog)s units                            get all units
-#   %(prog)s units application=nova-compute   get all `nova-compute` units
-#   %(prog)s u a=hw-health host~e01           get all `hw-health` units on hostname like "e01"
-#   %(prog)s m m^~lxd                         get all non-LXD machines
-#
-# """
+PLAIN_EPILOG = f"Version {__version__} | {__repository__} | {__issues__}"
 
 
 def get_parser() -> ArgumentParser:
+    generating_man: bool = __name__ == "<run_path>"
+
     parser = ArgumentParser(
-        prog="jockey", description=__doc__, epilog=epilog, formatter_class=ArgumentDefaultsHelpFormatter
+        prog="juju-jockey",
+        description=__doc__,
+        epilog=PLAIN_EPILOG if generating_man else RICH_EPILOG,
+        formatter_class=ArgumentDefaultsHelpFormatter,
     )
 
     parser.add_argument("-v", "--verbose", default=0, action="count", help="increase logging verbosity")
