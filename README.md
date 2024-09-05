@@ -9,6 +9,7 @@
 ![Programming Language][shield-language]
 [![Tests][shield-tests]][url-tests]
 [![Contributors][shield-contributors]][url-contributors]
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FLCVcode%2Fjockey.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FLCVcode%2Fjockey?ref=badge_shield)
 
 [shield-license]: https://img.shields.io/github/license/LCVcode/jockey?style=for-the-badge
 [shield-contributors]: https://img.shields.io/github/contributors/LCVcode/jockey?style=for-the-badge
@@ -110,3 +111,7 @@ ceph-osd/0 ceph-osd/1 ceph-osd/2
 * Filter by leadership
 * Filter by principal
 * Filter by lxd
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FLCVcode%2Fjockey.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FLCVcode%2Fjockey?ref=badge_large)
