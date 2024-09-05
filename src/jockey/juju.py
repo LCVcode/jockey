@@ -6,200 +6,391 @@ It offers utilities to retrieve information about applications, units, and machi
 extending Juju's native status objects with additional functionality.
 """
 
-from typing import List
+from abc import abstractmethod
+from collections.abc import Mapping
+import logging
+from typing import Any, ClassVar, Generator, Iterable, Optional
 
-from typing_extensions import Required
-
-from jockey.juju_schema.full_status import ApplicationStatus, FullStatus, MachineStatus, UnitStatus
-
-
-class JujuUnitStatus(UnitStatus):
-    """Represents the status of a Juju unit, extending the :class:`full_status.UnitStatus` schema."""
-
-    name: Required[str]
-    """The name of the Juju unit."""
-
-    host: MachineStatus
-    """The machine on which the unit is hosted."""
+from jockey.juju_schema.full_status import ApplicationStatus
+from jockey.juju_schema.full_status import FullStatus as JujuStatus
+from jockey.juju_schema.full_status import MachineStatus, UnitStatus
 
 
-class JujuApplicationStatus(ApplicationStatus):
+logger = logging.getLogger(__name__)
+
+
+class Wrapper(Mapping):
+    tokens: ClassVar[set[str]] = {"wrapper"}
+    """The tokens used to identify the wrapped object."""
+
+    virtual_fields: ClassVar[set[str]] = {"name", "@name", "@tokens", "@status"}
+
+    juju_status: JujuStatus
+    """The Juju status containing the wrapped object."""
+
+    name: str
+    """The name of the wrapped object."""
+
+    def __init__(self, juju_status: JujuStatus, name: str):
+        self.juju_status = juju_status
+        self.name = name
+
+    def __getitem__(self, key) -> object:
+        if key == "@":
+            return self.virtual_fields
+
+        if key == "name" or key == "@name" or key in self.tokens:
+            return self.name
+
+        if key == "@tokens":
+            return self.tokens
+
+        if key == "@status":
+            return self.juju_status
+
+        return self.status[key]
+
+    def __setitem__(self, key, value):
+        if key == "name" or key == "@name" or key in self.tokens:
+            self.name = value
+
+        self.status[key] = value
+
+    def __eq__(self, other):
+        return self.status == other.status
+
+    def __ne__(self, other):
+        return self.status != other.status
+
+    def __iter__(self):
+        return iter(self.status)
+
+    def __len__(self):
+        return len(self.status)
+
+    def __dict__(self):
+        return self.status
+
+    def __str__(self):
+        return str(self.status)
+
+    @staticmethod
+    @abstractmethod
+    def from_juju_status(juju_status: JujuStatus) -> Iterable["Wrapper"]:
+        yield Wrapper(juju_status, "")
+
+    @property
+    def status(self) -> Any:
+        return self.juju_status
+
+
+class Application(Wrapper):
     """Represents the status of a Juju application, extending the :class:`full_status.ApplicationStatus` schema."""
 
-    name: Required[str]
-    """The name of the Juju application."""
+    tokens: ClassVar[set[str]] = {"applications", "app", "apps", "application", "a"}
+    virtual_fields: ClassVar[set[str]] = {
+        "name",
+        "@name",
+        "@tokens",
+        "@status",
+        "@is-subordinate",
+        "@is-principal",
+        "@has-units",
+        "@units",
+    }
+
+    def __init__(self, juju_status: JujuStatus, name: str):
+        super().__init__(juju_status, name)
+
+    def __getitem__(self, key) -> object:
+        if key == "@is-subordinate":
+            return self.is_subordinate
+
+        if key == "@is-principal":
+            return self.is_principal
+
+        if key == "@has-units":
+            return self.has_units
+
+        if key == "@units":
+            return self.units
+
+        return super().__getitem__(key)
+
+    def __eq__(self, other):
+        return isinstance(other, Application) and super().__eq__(other)
+
+    def __ne__(self, other):
+        return not isinstance(other, Application) or super().__ne__(other)
+
+    @staticmethod
+    def from_juju_status(juju_status: JujuStatus) -> Generator["Application", None, None]:
+        """
+        Retrieve all applications from the Juju status.
+
+        :param juju_status: The :class:`full_status.FullStatus` data structure.
+        :return: A generator of :class:`Application` objects representing each application.
+        """
+        if "applications" in juju_status:
+            for name in juju_status["applications"].keys():
+                logger.debug("Found application: %r", name)
+                yield Application(juju_status, name)
+
+    @staticmethod
+    def name_from_unit_name(unit_name: str) -> str:
+        """
+        Parse the application name from a given unit name.
+
+        :param unit_name: The unit name.
+        :return: The application name.
+        """
+        return unit_name.split("/")[0]
+
+    @property
+    def status(self) -> ApplicationStatus:
+        return self.juju_status["applications"][self.name]
+
+    @property
+    def is_subordinate(self) -> bool:
+        """
+        Check if the application is subordinate to another.
+
+        :return: ``True`` if the application is subordinate, ``False`` otherwise.
+        """
+        return "subordinate-to" in self.status
+
+    @property
+    def is_principal(self) -> bool:
+        """
+        Check if the application is principal to another.
+
+        :return: ``True`` if the application is principal, ``False`` otherwise.
+        """
+        return not self.is_subordinate
+
+    @property
+    def has_units(self) -> bool:
+        """
+        Check if the application has any active units.
+
+        :return: ``True`` if the application has any active units, ``False`` otherwise.
+        """
+        return "units" in self.status and len(self.status["units"]) > 0
+
+    @property
+    def units(self) -> Generator["Unit", None, None]:
+        """
+        Retrieve the units associated with the Juju application.
+
+        :return: A generator of :class:`Unit` objects representing each unit.
+        """
+        if "units" in self.status:
+            for unit_name in self.status["units"].keys():
+                yield Unit(self.juju_status, unit_name, self.name)
 
 
-class JujuMachineStatus(MachineStatus):
+class Unit(Wrapper):
+    """Represents the status of a Juju unit, extending the :class:`full_status.UnitStatus` schema."""
+
+    tokens: ClassVar[set[str]] = {"units", "unit", "u"}
+
+    virtual_fields: ClassVar[set[str]] = {
+        "name",
+        "@name",
+        "@tokens",
+        "@status",
+        "@application",
+        "@application-name",
+        "@has-subordinates",
+        "@subordinates",
+        "@machine",
+    }
+
+    principal_unit: Optional["Unit"] = None
+
+    application_name: str
+    """The name of the Juju application associated with this unit."""
+
+    def __init__(
+        self, juju_status: JujuStatus, name: str, application_name: str, principal_unit: Optional["Unit"] = None
+    ):
+        super().__init__(juju_status, name)
+        self.application_name = application_name
+        self.principal_unit = principal_unit
+
+    def __getitem__(self, key) -> object:
+        if key == "@application":
+            return self.application
+
+        if key == "@application-name":
+            return self.application_name
+
+        if key == "@has-subordinates" or key == "@has_subordinates":
+            return self.has_subordinates
+
+        if key == "@subordinates":
+            return self.subordinates
+
+        if key == "@machine":
+            return self.machine
+
+        return super().__getitem__(key)
+
+    def __eq__(self, other):
+        return isinstance(other, Unit) and super().__eq__(other)
+
+    def __ne__(self, other):
+        return not isinstance(other, Unit) or super().__ne__(other)
+
+    @staticmethod
+    def from_juju_status(juju_status: JujuStatus) -> Generator["Unit", None, None]:
+        """
+        Retrieve all units from the Juju status.
+
+        :param juju_status: The :class:`full_status.FullStatus` data structure.
+        :return: A generator of :class:`JujuUnitStatus` objects representing each unit.
+        """
+        for application in Application.from_juju_status(juju_status):
+            for unit in application.units:
+                yield unit
+                yield from unit.subordinates
+
+    @property
+    def status(self) -> UnitStatus:
+        if self.principal_unit:
+            return self.principal_unit.status["subordinates"][self.name]
+        else:
+            return self.juju_status["applications"][self.application_name]["units"][self.name]
+
+    @property
+    def application(self) -> Application:
+        return Application(self.juju_status, self.application_name)
+
+    @property
+    def has_subordinates(self) -> bool:
+        """
+        Check if the unit has subordinates.
+
+        :return: ``True`` if the unit has subordinates, ``False`` otherwise.
+        """
+        return "subordinates" in self.status and len(self.status["subordinates"]) > 0
+
+    @property
+    def subordinates(self) -> Generator["Unit", None, None]:
+        """
+        Retrieve the subordinate units associated with this unit.
+
+        :return: A generator of :class:`Unit` objects representing each subordinate unit associated with this unit.
+        """
+        if self.has_subordinates:
+            for subordinate_name in self.status["subordinates"].keys():
+                application_name = Application.name_from_unit_name(subordinate_name)
+                yield Unit(self.juju_status, subordinate_name, application_name, self)
+
+    @property
+    def machine(self) -> "Machine":
+        return self.principal_unit.machine if self.principal_unit else Machine(self.juju_status, self.status["machine"])
+
+
+class Machine(Wrapper):
     """Represents the status of a Juju machine, extending the :class:`full_status.MachineStatus` schema."""
 
-    name: Required[str]
-    """The ID of the Juju machine."""
+    tokens: ClassVar[set[str]] = {"machines", "machine", "m"}
 
+    virtual_fields = {
+        "@name",
+        "name",
+        "@tokens",
+        "@status",
+        "@id",
+        "@machine-id",
+        "@parent-id",
+        "@parent-name",
+        "@parent",
+        "@has-containers",
+        "@containers",
+        "@is-container",
+    }
 
-def all_applications(status: FullStatus) -> List[JujuApplicationStatus]:
-    """
-    Retrieves all applications from the Juju status.
+    def __getitem__(self, key) -> object:
+        if key == "@id" or key == "@machine-id":
+            return self.name
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :return: A list of :class:`JujuApplicationStatus` objects representing each application.
-    """
-    return [JujuApplicationStatus(name=name, **app) for name, app in status["applications"].items()]
+        if key == "@parent-id" or key == "@parent-name":
+            return self.parent_name
 
+        if key == "@parent":
+            return self.parent
 
-def all_application_names(status: FullStatus) -> List[str]:
-    """
-    Retrieves all application names from the Juju status.
+        if key == "@has-containers":
+            return self.has_containers
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :return: A list of application names in no particular order.
-    """
-    return [app for app in status["applications"].keys()]
+        if key == "@containers":
+            return self.containers
 
+        if key == "@is-container":
+            return self.is_container
 
-def is_subordinate_application(status: FullStatus, app_name: str) -> bool:
-    """
-    Checks if an application is subordinate to another.
+        return super().__getitem__(key)
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :return: ``True`` if the application is subordinate, ``False`` otherwise.
-    """
-    return "subordinate-to" in status["applications"][app_name]
+    def __eq__(self, other):
+        return isinstance(other, Machine) and super().__eq__(other)
 
+    def __ne__(self, other):
+        return not isinstance(other, Machine) or super().__ne__(other)
 
-def is_principal_application(status: FullStatus, app_name: str) -> bool:
-    """
-    Checks if an application is principal to another.
+    @staticmethod
+    def from_juju_status(juju_status: JujuStatus) -> Generator["Machine", None, None]:
+        """
+        Retrieve all machines from the Juju status.
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :return: ``True`` if the application is principal, ``False`` otherwise.
-    """
-    return not is_subordinate_application(status, app_name)
+        :param juju_status: The :class:`full_status.FullStatus` data structure.
+        :return: A generator of :class:`JujuMachineStatus` objects representing each machine.
+        """
+        if "machines" in juju_status:
+            for name in juju_status["machines"]:
+                yield Machine(juju_status, name)
 
+    @staticmethod
+    def id_is_container(machine_name: str) -> bool:
+        """
+        Check if a machine is a container.
 
-def application_has_units(status: FullStatus, app_name: str) -> bool:
-    """
-    Checks if an application has any active units.
+        :param machine_name: The machine ID.
+        :return: ``True`` if the machine is a container, ``False`` otherwise.
+        """
+        return "/lxd/" in machine_name
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :return: ``True`` if the application has any active units, ``False`` otherwise.
-    """
-    return "units" in status["applications"][app_name] and len(status["applications"][app_name]["units"]) > 0
+    @property
+    def status(self) -> MachineStatus:
+        if self.is_container:
+            return self.juju_status["machines"][self.parent_name]["containers"][self.name]
+        else:
+            return self.juju_status["machines"][self.name]
 
+    @property
+    def has_containers(self) -> bool:
+        return not self.is_container and "containers" in self.status and len(self.status["containers"]) > 0
 
-def application_units(status: FullStatus, app_name: str) -> List[JujuUnitStatus]:
-    """
-    Retrieves the units associated with a Juju application.
+    @property
+    def containers(self) -> Generator["Machine", None, None]:
+        if self.has_containers:
+            for container_name in self.status["containers"]:
+                yield Machine(self.juju_status, container_name)
 
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :return: A list of :class:`JujuUnitStatus` objects representing each unit.
-    """
-    if not application_has_units(status, app_name):
-        return []
+    @property
+    def parent_name(self) -> str:
+        return self.name.split("/")[0] if self.is_container else self.name
 
-    units = []
-    for unit_name, unit in status["applications"][app_name]["units"].items():
-        host: MachineStatus = lookup_machine(status, unit["machine"])
-        units.append(JujuUnitStatus(name=unit_name, host=host, **unit))
-        units.extend(unit_subordinates(status, app_name, unit_name))
+    @property
+    def parent(self) -> "Machine":
+        return Machine(self.juju_status, self.name.split("/")[0]) if self.is_container else self
 
-    return units
+    @property
+    def is_container(self) -> bool:
+        """
+        Check if this machine is a container.
 
-
-def application_unit_names(status: FullStatus, app_name: str) -> List[str]:
-    """
-    Retrieves the names of the units associated with a Juju application.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :return: A list of unit names in no particular order.
-    """
-    return [unit["name"] for unit in application_units(status, app_name)]
-
-
-def unit_has_subordinates(status: FullStatus, app_name: str, unit_name: str) -> bool:
-    """
-    Checks if a unit has subordinates.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :param unit_name: The name of the unit.
-    :return: ``True`` if the unit has subordinates, ``False`` otherwise.
-    """
-    return (
-        "subordinates" in status["applications"][app_name]["units"][unit_name]
-        and len(status["applications"][app_name]["units"][unit_name]["subordinates"]) > 0
-    )
-
-
-def unit_subordinates(status: FullStatus, app_name: str, unit_name: str) -> List[JujuUnitStatus]:
-    """
-    Retrieves the subordinate units associated with a Juju unit.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param app_name: The name of the application.
-    :param unit_name: The name of the unit.
-    :return: A list of :class:`JujuUnitStatus` objects representing each subordinate unit associated with the unit.
-    """
-    if not unit_has_subordinates(status, app_name, unit_name):
-        return []
-
-    subs = []
-    host: MachineStatus = lookup_machine(status, status["applications"][app_name]["units"][unit_name]["machine"])
-    for sub_name, sub in status["applications"][app_name]["units"][unit_name]["subordinates"].items():
-        subs.append(JujuUnitStatus(name=sub_name, host=host, **sub))
-
-    return subs
-
-
-def all_units(status: FullStatus) -> List[JujuUnitStatus]:
-    """
-    Retrieves all units from the Juju status.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :return: A list of :class:`JujuUnitStatus` objects representing each unit.
-    """
-    units = []
-    for app_name in all_application_names(status):
-        units.extend(application_units(status, app_name))
-
-    return units
-
-
-def all_machines(status: FullStatus) -> List[MachineStatus]:
-    """
-    Retrieves all machines from the Juju status.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :return: A list of :class:`JujuMachineStatus` objects representing each machine.
-    """
-    return [JujuMachineStatus(name=name, **machine) for name, machine in status["machines"].items()]
-
-
-def is_container(machine_id: str) -> bool:
-    """
-    Checks if a machine is a container.
-
-    :param machine_id: The machine ID.
-    :return: ``True`` if the machine is a container, ``False`` otherwise.
-    """
-    return "/lxd/" in machine_id
-
-
-def lookup_machine(status: FullStatus, machine_id: str) -> MachineStatus:
-    """
-    Looks up a machine or container in the Juju status.
-
-    :param status: The :class:`full_status.FullStatus` data structure.
-    :param machine_id: The ID of the machine or container to find.
-    :return: The :class:`full_status.MachineStatus` object representing the machine or container.
-    """
-    if is_container(machine_id):
-        root_machine_id = machine_id.split("/")[0]
-        return status["machines"][root_machine_id]["containers"][machine_id]
-    else:
-        return status["machines"][machine_id]
+        :return: ``True`` if the machine is a container, ``False`` otherwise.
+        """
+        return Machine.id_is_container(self.name)

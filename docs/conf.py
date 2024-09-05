@@ -35,7 +35,7 @@ templates_path = [
 html_static_path = [
     "_static",
 ]
-source_suffix = ".rst"
+source_suffix = [".rst", ".md"]
 master_doc = "index"
 html_theme = "canonical_sphinx"
 add_module_names = True

@@ -40,7 +40,7 @@ CASES = [
             "-f",
             K8S_SAMPLE_PATH,
             "unit.public-address",
-            "host.hostname=juju-36490e-1",
+            "@machine.hostname=juju-36490e-1",
             "workload-status.current~block",
             "name%container",
         ],
