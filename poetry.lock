@@ -26,6 +26,22 @@ files = [
 test = ["coverage", "mypy", "pexpect", "ruff", "wheel"]
 
 [[package]]
+name = "argparse-manpage"
+version = "4.6"
+description = "Build manual page from python's ArgumentParser object."
+optional = false
+python-versions = "*"
+files = [
+    {file = "argparse-manpage-4.6.tar.gz", hash = "sha256:0b659d70fd142876da41c2918bd6de4d027875720b0e4672d6443b51198dbb62"},
+]
+
+[package.dependencies]
+tomli = {version = "*", markers = "python_version < \"3.11\""}
+
+[package.extras]
+setuptools = ["setuptools"]
+
+[[package]]
 name = "astroid"
 version = "3.3.2"
 description = "An abstract syntax tree for Python with inference support."
@@ -2720,4 +2736,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "954218543286d6d7d6d760de9d935f90d7b01afe6801fae922b6ef588017173c"
+content-hash = "9a41507d5aea06dc8965a0f9bed32989e05fa1a985adf17d11244882e87fd7c3"

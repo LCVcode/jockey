@@ -1,4 +1,3 @@
-
 ## Objects
 ### Supported Objects
 _Jockey_ allows querying of the following **Juju** objects:

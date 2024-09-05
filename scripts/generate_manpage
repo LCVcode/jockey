@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+
+__author__ = "John Lettman"
+__email__ = "the@johnlettman.com"
+__license__ = "MIT"
+
+import os.path
+import subprocess
+from tempfile import NamedTemporaryFile
+
+
+SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
+REPO_DIR = os.path.dirname(SCRIPTS_DIR)
+INFO_PATH = os.path.join(REPO_DIR, "src", "jockey", "info.md")
+ARGS_PATH = os.path.join(REPO_DIR, "src", "jockey", "__args__.py")
+OUTPUT_PATH = os.path.join(REPO_DIR, "man", "juju-jockey.1")
+
+
+def run(*command: str) -> (str, str, int):
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout, stderr, process.returncode
+
+
+def main() -> int:
+    with NamedTemporaryFile(mode="w+") as tmp_extra:
+        (stdout, stderr, code) = run("pandoc", "--standalone", "--to", "man", "-o", tmp_extra.name, INFO_PATH)
+
+        if code != 0:
+            return code
+
+        with NamedTemporaryFile(mode="w+") as tmp_final:
+            tmp_final.write("[JOCKEY REFERENCE]\n")
+            with open(tmp_extra.name) as tmp_extra_reader:
+                tmp_final.write(tmp_extra_reader.read().replace('.TH "" "" "" "" ""', ""))
+
+            tmp_final.flush()
+
+            print(tmp_final.name)
+
+            (stdout, stderr, code) = run(
+                "argparse-manpage",
+                "--pyfile",
+                ARGS_PATH,
+                "--function",
+                "get_parser",
+                "--project-name",
+                "Juju Jockey",
+                "--description",
+                "Jockey is a utility that facilitates quick retrieval of Juju objects that match given filters.",
+                "--author",
+                "Connor Chamberlain",
+                "--url",
+                "https://github.com/LCVcode/jockey",
+                "--manual-title",
+                "Juju Plugins Manual",
+                "--include",
+                tmp_final.name,
+                "--output",
+                OUTPUT_PATH,
+            )
+
+        if code != 0:
+            return code
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())

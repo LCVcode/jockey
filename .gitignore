@@ -4,6 +4,9 @@
 *.sh
 !tests/samples/*
 
+### Distribution
+man/
+
 ### Testing
 .github-test-report.md
 
