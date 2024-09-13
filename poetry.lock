@@ -1517,13 +1517,13 @@ test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1
 
 [[package]]
 name = "pdoc"
-version = "14.6.1"
+version = "14.7.0"
 description = "API Documentation for Python Projects"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pdoc-14.6.1-py3-none-any.whl", hash = "sha256:efbed433655264392c60551615a3d42b8f21e492373419756d20234c667b54bc"},
-    {file = "pdoc-14.6.1.tar.gz", hash = "sha256:ee598f30d5c55dd4702086dabc412a26022acc35aa88aa382cda8ac655fead98"},
+    {file = "pdoc-14.7.0-py3-none-any.whl", hash = "sha256:72377a907efc6b2c5b3c56b717ef34f11d93621dced3b663f3aede0b844c0ad2"},
+    {file = "pdoc-14.7.0.tar.gz", hash = "sha256:2d28af9c0acc39180744ad0543e4bbc3223ecba0d1302db315ec521c51f71f93"},
 ]
 
 [package.dependencies]
@@ -2736,4 +2736,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "0e3fdb7555578ad9e150f392e44a450305319e56109ff7ec7dc9b54a86d10118"
+content-hash = "52090e1b3c3fbabce7c1a9741f161ba9179fd4e9e05238e21f94424d38c2613e"
