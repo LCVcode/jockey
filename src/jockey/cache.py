@@ -44,7 +44,7 @@ from typing import Any, Callable, NamedTuple, Optional
 from orjson import dumps as json_dumps
 from orjson import loads as json_loads
 from slugify import slugify
-from xdgenvpy import XDGPedanticPackage  # type: ignore[import-untyped]
+from xdgenvpy.xdgenv import XDGPedanticPackage
 
 
 JOCKEY_XDG = XDGPedanticPackage("jockey")
