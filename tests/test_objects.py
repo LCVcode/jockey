@@ -2,6 +2,7 @@
 import os
 import random
 from string import ascii_letters, digits
+from typing import Optional
 
 from orjson import loads as json_loads
 import pytest
@@ -91,18 +92,18 @@ def test_object_from_str_bad_name():
 @pytest.mark.parametrize(
     "string, want_obj, want_field",
     [
-        ("apps.field", Object.APPLICATION, "field"),
-        ("units.field", Object.UNIT, "field"),
-        ("machines.field", Object.MACHINE, "field"),
-        ("a.field.sub", Object.APPLICATION, "field.sub"),
-        ("u.field.sub", Object.UNIT, "field.sub"),
-        ("m.field.sub", Object.MACHINE, "field.sub"),
+        ("apps.field", Object.APPLICATION, ["field"]),
+        ("units.field", Object.UNIT, ["field"]),
+        ("machines.field", Object.MACHINE, ["field"]),
+        ("a.field.sub", Object.APPLICATION, ["field.sub"]),
+        ("u.field.sub", Object.UNIT, ["field.sub"]),
+        ("m.field.sub", Object.MACHINE, ["field.sub"]),
         ("app", Object.APPLICATION, None),
         ("unit", Object.UNIT, None),
         ("machine", Object.MACHINE, None),
     ],
 )
-def test_object_parse(string: str, want_obj: Object, want_field: str):
+def test_object_parse(string: str, want_obj: Object, want_field: Optional[list[str]]):
     assert Object.parse(string) == (want_obj, want_field)
 
 

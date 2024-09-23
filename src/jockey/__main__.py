@@ -97,8 +97,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     # try parsing the OBJECT expression into its components (object, field)
     try:
-        obj, obj_field = Object.parse(args.object)
-        logger.debug("Parsed object expression %r into %r with field %r", obj_expression, obj, obj_field)
+        obj, obj_fields = Object.parse(args.object)
+        logger.debug("Parsed object expression %r into %r with fields %r", obj_expression, obj, obj_fields)
     except ValueError as e:
         logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
         return 2  # usage error
@@ -155,12 +155,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 selection.append(item)
 
     for item in selection:
-        if obj_field is None:
+        if obj_fields is None:
             print(item["name"])
-        elif obj_field == "":
-            print(item)
+        elif len(obj_fields) == 1:
+            if obj_fields[0] == "":
+                print(item)
+            else:
+                print(Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_fields[0]])
         else:
-            print(Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_field])
+            print(
+                [Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_field] for obj_field in obj_fields]
+            )
 
     return 0
 
