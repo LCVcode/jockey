@@ -55,6 +55,7 @@ CASES = [
         ],
         """
         arch=amd64 cores=2 mem=8192M virt-type=container
+        None
         arch=amd64 cores=2 mem=8192M virt-type=container
         """,
         0,
