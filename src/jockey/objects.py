@@ -98,7 +98,7 @@ class Object(Enum):
         raise ValueError(f"Unknown object name '{obj_name}'")
 
     @staticmethod
-    def parse(obj_expression: str) -> tuple["Object", Optional[str]]:
+    def parse(obj_expression: str) -> tuple["Object", Optional[list[str]]]:
         """
         Parses an object expression into its corresponding :class:`Object` and an optional field reference.
 
@@ -107,12 +107,21 @@ class Object(Enum):
         :raises ValueError: If the string does not match any known :class:`Object`, from :func:`from_str`.
         """
         if "." in obj_expression:
-            obj_name, obj_field = obj_expression.split(".", 1)
+            # split on the first dot
+            obj_name, obj_fields_expression = obj_expression.split(".", 1)
         else:
-            obj_name = obj_expression
-            obj_field = None
+            # split on the first comma
+            parts = obj_expression.split(",", 1)
+            obj_name = parts[0]
+            obj_fields_expression = parts[1] if len(parts) > 1 else None
 
-        return Object.from_str(obj_name), obj_field
+        # if fields are specified, split them on the comma boundary into a set
+        if obj_fields_expression:
+            obj_fields = obj_fields_expression.split(",")
+        else:
+            obj_fields = None
+
+        return Object.from_str(obj_name), obj_fields
 
     def collect(self, status: FullStatus) -> list[dict]:
         """

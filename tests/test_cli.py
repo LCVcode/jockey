@@ -59,6 +59,20 @@ CASES = [
         """,
         0,
     ),
+    Case(
+        ["-f", K8S_SAMPLE_PATH, "app,base", "charm=kubernetes-control-plane"],
+        """
+        {'name': 'ubuntu', 'channel': '22.04'}
+        """,
+        0,
+    ),
+    Case(
+        ["-f", K8S_SAMPLE_PATH, "app.name,base", "charm=kubernetes-control-plane"],
+        """
+        ['kubernetes-control-plane', {'name': 'ubuntu', 'channel': '22.04'}]
+        """,
+        0,
+    ),
 ]
 
 
