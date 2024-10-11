@@ -134,7 +134,7 @@ def test_object_parse_bad_name():
                 "containerd/0",
             },
         ),
-        ("k8s-core-juju-status.json", Object.MACHINE, {"0", "1"}),
+        ("k8s-core-juju-status.json", Object.MACHINE, {"0", "0/lxd/0", "1"}),
     ],
 )
 def test_object_collect(obj: Object, sample: str, names: set[str]):

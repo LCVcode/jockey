@@ -48,7 +48,7 @@ class Wrapper(Mapping):
         if key == "@status":
             return self.juju_status
 
-        return self.status[key]
+        return self.status.get(key, None)
 
     def __setitem__(self, key, value):
         if key == "name" or key == "@name" or key in self.tokens:
@@ -350,6 +350,9 @@ class Machine(Wrapper):
         if "machines" in juju_status:
             for name in juju_status["machines"]:
                 yield Machine(juju_status, name)
+
+                for container in juju_status["machines"][name].get("containers", []):
+                    yield Machine(juju_status, container)
 
     @staticmethod
     def id_is_container(machine_name: str) -> bool:
