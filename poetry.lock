@@ -1348,13 +1348,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-pyinstaller-plugin"
-version = "1.2.0"
+version = "1.2.1"
 description = "Poetry plugin to build and/or bundle executable binaries with PyInstaller"
 optional = false
-python-versions = "<3.13,>=3.8"
+python-versions = "<=3.13,>=3.8"
 files = [
-    {file = "poetry_pyinstaller_plugin-1.2.0-py3-none-any.whl", hash = "sha256:9946516c811c61ec20bfd4e8c681026e9678a804127ea539ca0dbb9d8bfd18a0"},
-    {file = "poetry_pyinstaller_plugin-1.2.0.tar.gz", hash = "sha256:194296344b7bf12ce6663cf1e25153b2b42399f44f8fb4a29f2f79cc73ad6b3c"},
+    {file = "poetry_pyinstaller_plugin-1.2.1-py3-none-any.whl", hash = "sha256:070318d1d92054f84c7fc58234fe68f68f3b2b0b5c954b24e77d97179a20b556"},
+    {file = "poetry_pyinstaller_plugin-1.2.1.tar.gz", hash = "sha256:c88511ccc8c3497b57f773f5f3993cbb3f4858b48c270593416261dc816dd2bc"},
 ]
 
 [[package]]
@@ -2375,4 +2375,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a161b5ab1003f20a8ba5aca29e7ed7f20d5c51a92e90c2863da0a51f298369ca"
+content-hash = "713563ea4d0799e1760dfef37764e0f6c86a92f277e86679a9b948a813895436"
