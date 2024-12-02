@@ -1926,13 +1926,13 @@ test = ["cython (>=3.0)", "defusedxml (>=0.7.1)", "pytest (>=8.0)", "setuptools 
 
 [[package]]
 name = "sphinx-autoapi"
-version = "3.3.2"
+version = "3.4.0"
 description = "Sphinx API documentation generator"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "sphinx_autoapi-3.3.2-py2.py3-none-any.whl", hash = "sha256:08afa656f7fcd45fe7dd64bf9f44698ddb8ca7c2d5cd0614c7455912ed580324"},
-    {file = "sphinx_autoapi-3.3.2.tar.gz", hash = "sha256:ebf8b44b2ebab5c28f0263ec6c2f8acdd156e9b2d539a58eca39d2f368445173"},
+    {file = "sphinx_autoapi-3.4.0-py3-none-any.whl", hash = "sha256:4027fef2875a22c5f2a57107c71641d82f6166bf55beb407a47aaf3ef14e7b92"},
+    {file = "sphinx_autoapi-3.4.0.tar.gz", hash = "sha256:e6d5371f9411bbb9fca358c00a9e57aef3ac94cbfc5df4bab285946462f69e0c"},
 ]
 
 [package.dependencies]
@@ -1943,9 +1943,6 @@ astroid = [
 Jinja2 = "*"
 PyYAML = "*"
 sphinx = ">=6.1.0"
-
-[package.extras]
-docs = ["furo", "sphinx", "sphinx-design"]
 
 [[package]]
 name = "sphinx-autodoc-typehints"
@@ -2375,4 +2372,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.13"
-content-hash = "a161b5ab1003f20a8ba5aca29e7ed7f20d5c51a92e90c2863da0a51f298369ca"
+content-hash = "6ebdf2ae380d943e18a0db8d77d5ab636e02928bd222e5c8238ba2476bde8e9c"
