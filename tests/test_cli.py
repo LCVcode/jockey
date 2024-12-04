@@ -47,7 +47,12 @@ SUPPORTED_CASES = [
 ]
 
 
-UNSUPPORTED_CASES = []
+UNSUPPORTED_CASES = (
+    ["-f", K8S_SAMPLE_PATH, "c"],
+    ["-f", K8S_SAMPLE_PATH, "a"],
+    ["-f", K8S_SAMPLE_PATH, "i"],
+    ["-f", K8S_SAMPLE_PATH, "h"],
+)
 
 
 @pytest.mark.parametrize("case", SUPPORTED_CASES)
@@ -59,3 +64,12 @@ def test_cli(case: Case):
 
     assert want_code == got_code
     assert dedent(want_output).strip() == "\n".join(got_output_lines).strip()
+
+
+@pytest.mark.parametrize("argv", UNSUPPORTED_CASES)
+def test_cli_unsupported_queries(argv: Sequence[str]):
+    """
+    These tests target unsupported queries.  AssertionErrors are expected.
+    """
+    with pytest.raises(AssertionError):
+        main(argv)
