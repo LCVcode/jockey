@@ -54,6 +54,8 @@ def get_parser() -> ArgumentParser:
         help="use a local Juju status JSON file",
     )
 
+    """
+    # Jockey remote Juju options are temporarily suppressed
     # Remote Juju Options
     group_remote = parser.add_argument_group(
         title="Remote Juju Options", description="SSH connections to remote systems with Juju"
@@ -69,6 +71,7 @@ def get_parser() -> ArgumentParser:
         "-T", "--timeout", metavar="SEC", default=SUPPRESS, help="timeout for commands and connections"
     )
     group_remote.add_argument("-J", "--juju", metavar="COMMAND", default=SUPPRESS, help="name of the Juju command")
+    """
 
     # Cache Options
     group_cache = parser.add_argument_group("Cache Options", "Management of the local Juju object cache")

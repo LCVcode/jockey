@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
+import pdb
 import logging
 import os
 from pkgutil import get_data
@@ -21,6 +22,7 @@ from jockey.cloud import Cloud, CloudCredentialsException
 from jockey.filters import parse_filter_expressions
 from jockey.juju import Application, Machine, Unit
 from jockey.objects import Object
+from jockey.core import convert_object_abbreviation, ObjectType, RETRIEVAL_MAP, parse_filter_string
 
 
 logger = logging.getLogger(__name__)
@@ -95,16 +97,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print_info()
         return 0
 
-    # try parsing the OBJECT expression into its components (object, field)
-    try:
-        obj, obj_fields = Object.parse(args.object)
-        logger.debug("Parsed object expression %r into %r with fields %r", obj_expression, obj, obj_fields)
-    except ValueError as e:
-        logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
-        return 2  # usage error
-
     # obtain the Juju status
     if "file" in args:  # obtain the Juju status from the provided file
+        # TODO: context manager here
         status_file = args.file
         status = json_loads(status_file.read())
         status_file.close()
@@ -136,7 +131,25 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         finally:
             cloud.close()
 
+    # try parsing the OBJECT expression into its components (object, field)
+
+    # TODO: reimplement functional filtering here
+    # pdb.set_trace()
+    try:
+        obj = convert_object_abbreviation(args.object)
+        logger.debug("Parsed object expression %r into %r", args.object, obj)
+    except ValueError as e:
+        logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
+        return 2  # usage error
+
     # select OBJECTs from the Juju status
+    action = RETRIEVAL_MAP.get(obj, None)
+    assert action, f"Querying object type {obj} is not yet supported."
+    filters = [parse_filter_string(f) for f in args.filters] if "filters" in args else []
+    print("\n".join(action(status, filters)))
+    return 0
+
+    """
     selection: List[Dict] = []
     if "filters" not in args:  # select all OBJECTs in the absence of filters
         selection = obj.collect(status)
@@ -167,7 +180,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 [Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_field] for obj_field in obj_fields]
             )
 
-    return 0
+    """
 
 
 if __name__ == "__main__":

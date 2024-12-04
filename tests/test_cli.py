@@ -20,7 +20,7 @@ class Case(NamedTuple):
         return " ".join(self.argv)
 
 
-CASES = [
+SUPPORTED_CASES = [
     Case(
         ["-f", K8S_SAMPLE_PATH, "u"],
         """
@@ -36,48 +36,21 @@ CASES = [
         0,
     ),
     Case(
-        [
-            "-f",
-            K8S_SAMPLE_PATH,
-            "unit.public-address",
-            "@machine.hostname=juju-36490e-1",
-            "workload-status.current~block",
-            "name%container",
-        ],
-        "10.118.249.130",
-        0,
-    ),
-    Case(
-        [
-            "-f",
-            K8S_SAMPLE_PATH,
-            "machine.hardware",
-        ],
+        ["-f", K8S_SAMPLE_PATH, "m"],
         """
-        arch=amd64 cores=2 mem=8192M virt-type=container
-        None
-        arch=amd64 cores=2 mem=8192M virt-type=container
-        """,
-        0,
-    ),
-    Case(
-        ["-f", K8S_SAMPLE_PATH, "app,base", "charm=kubernetes-control-plane"],
-        """
-        {'name': 'ubuntu', 'channel': '22.04'}
-        """,
-        0,
-    ),
-    Case(
-        ["-f", K8S_SAMPLE_PATH, "app.name,base", "charm=kubernetes-control-plane"],
-        """
-        ['kubernetes-control-plane', {'name': 'ubuntu', 'channel': '22.04'}]
+        0
+        0/lxd/0
+        1
         """,
         0,
     ),
 ]
 
 
-@pytest.mark.parametrize("case", CASES)
+UNSUPPORTED_CASES = []
+
+
+@pytest.mark.parametrize("case", SUPPORTED_CASES)
 def test_cli(case: Case):
     (argv, want_output, want_code) = case
 
