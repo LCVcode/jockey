@@ -7,7 +7,6 @@ from pkgutil import get_data
 import sys
 from typing import Dict, List, Optional, Sequence
 
-from dotty_dictionary import Dotty  # type: ignore[import-untyped]
 from orjson import loads as json_loads
 from rich import print
 from rich.console import Console
@@ -19,10 +18,7 @@ from rich.traceback import install as install_traceback
 from jockey.__args__ import parse_args
 from jockey.cache import FileCache
 from jockey.cloud import Cloud, CloudCredentialsException
-from jockey.filters import parse_filter_expressions
-from jockey.juju import Application, Machine, Unit
-from jockey.objects import Object
-from jockey.core import convert_object_abbreviation, ObjectType, RETRIEVAL_MAP, parse_filter_string
+from jockey.core import convert_object_abbreviation, RETRIEVAL_MAP, parse_filter_string
 
 
 logger = logging.getLogger(__name__)
@@ -131,56 +127,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         finally:
             cloud.close()
 
-    # try parsing the OBJECT expression into its components (object, field)
-
-    # TODO: reimplement functional filtering here
-    # pdb.set_trace()
+    # Convert object abbreviations and reject malformed object names
     try:
         obj = convert_object_abbreviation(args.object)
         logger.debug("Parsed object expression %r into %r", args.object, obj)
-    except ValueError as e:
-        logger.error("Unable to parse object expression: %s\nValid options: %s", e, Object.names())
+    except ValueError:
+        logger.error("Unable to parse object expression: %r", args.object)
         return 2  # usage error
 
-    # select OBJECTs from the Juju status
+    # Get the function to query given object type
     action = RETRIEVAL_MAP.get(obj, None)
     assert action, f"Querying object type {obj} is not yet supported."
+
+    # Parse Juju status and print query results
     filters = [parse_filter_string(f) for f in args.filters] if "filters" in args else []
     print("\n".join(action(status, filters)))
     return 0
-
-    """
-    selection: List[Dict] = []
-    if "filters" not in args:  # select all OBJECTs in the absence of filters
-        selection = obj.collect(status)
-    else:  # apply filtering to OBJECTs
-        # parse the filters into actions
-        actions = parse_filter_expressions(args.filters)
-
-        # collect the OBJECTs
-        collection = obj.collect(status)
-
-        # iterate over each OBJECT in the collection,
-        # check all filters against it,
-        # and add it to our selection if they all pass
-        for item in collection:
-            if all([action(item) for action in actions]):
-                selection.append(item)
-
-    for item in selection:
-        if obj_fields is None:
-            print(item["name"])
-        elif len(obj_fields) == 1:
-            if obj_fields[0] == "":
-                print(item)
-            else:
-                print(Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_fields[0]])
-        else:
-            print(
-                [Dotty(item, mapping_types=(dict, Application, Unit, Machine))[obj_field] for obj_field in obj_fields]
-            )
-
-    """
 
 
 if __name__ == "__main__":
