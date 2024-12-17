@@ -17,7 +17,7 @@ from rich.traceback import install as install_traceback
 from jockey.__args__ import parse_args
 from jockey.cache import FileCache
 from jockey.cloud import Cloud, CloudCredentialsException
-from jockey.core import convert_object_abbreviation, RETRIEVAL_MAP, parse_filter_string
+from jockey.core import RETRIEVAL_MAP, convert_object_abbreviation, parse_filter_string
 
 
 logger = logging.getLogger(__name__)
@@ -63,8 +63,8 @@ def configure_logging(verbosity: int) -> None:
 
 def info() -> Markdown:
     info_data = get_data("jockey", "info.md")
-    info_data = info_data.decode("utf-8") if info_data else ""
-    return Markdown(info_data)
+    info_decoded = info_data.decode("utf-8") if info_data else ""
+    return Markdown(info_decoded)
 
 
 def print_info(console: Optional[Console] = None) -> None:
@@ -135,6 +135,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return 2  # usage error
 
     # Get the function to query given object type
+    assert obj
     action = RETRIEVAL_MAP.get(obj, None)
     assert action, f"Querying object type {obj} is not yet supported."
 

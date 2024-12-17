@@ -3,17 +3,10 @@
 # match given filters.
 # Author: Connor Chamberlain
 
-import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    Optional,
-    List,
-    Iterable,
-)
+import re
+from typing import Any, Dict, Generator, Iterable, List, Optional
 
 
 JujuStatus = Dict[str, Any]
@@ -180,6 +173,7 @@ def parse_filter_string(
 
     # Extract the filter code
     match = filter_code_pattern.search(filter_str)
+    assert match
 
     # Extract object type
     object_type = convert_object_abbreviation(filter_str[: match.start()])
@@ -509,7 +503,7 @@ def application_to_units(status: JujuStatus, app_name: str) -> Generator[str, No
         if application != app_name:
             continue
 
-        for unit_name in application["units"].keys():
+        for unit_name in data["units"].keys():
             yield unit_name
 
 

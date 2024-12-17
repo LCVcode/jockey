@@ -113,7 +113,7 @@ class Object(Enum):
             # split on the first comma
             parts = obj_expression.split(",", 1)
             obj_name = parts[0]
-            obj_fields_expression = parts[1] if len(parts) > 1 else None
+            obj_fields_expression = parts[1] if len(parts) > 1 else ""
 
         # if fields are specified, split them on the comma boundary into a set
         if obj_fields_expression:
