@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Jockey: a Juju query language to put all of your Juju objects at your fingertips."""
-import pdb
 import logging
 import os
 from pkgutil import get_data
 import sys
-from typing import Dict, List, Optional, Sequence
+from typing import Optional, Sequence
 
 from orjson import loads as json_loads
 from rich import print

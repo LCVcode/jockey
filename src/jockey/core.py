@@ -3,19 +3,15 @@
 # match given filters.
 # Author: Connor Chamberlain
 
-import argparse
-import json
 import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
     Dict,
-    NamedTuple,
     Generator,
     Optional,
     List,
-    Tuple,
     Iterable,
 )
 
