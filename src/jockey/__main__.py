@@ -129,13 +129,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # Convert object abbreviations and reject malformed object names
     try:
         obj = convert_object_abbreviation(args.object)
+        assert obj, f"{args.object} is not a recognized Juju object."
         logger.debug("Parsed object expression %r into %r", args.object, obj)
-    except ValueError:
+    except AssertionError:
         logger.error("Unable to parse object expression: %r", args.object)
         return 2  # usage error
 
     # Get the function to query given object type
-    assert obj
     action = RETRIEVAL_MAP.get(obj, None)
     assert action, f"Querying object type {obj} is not yet supported."
 

@@ -26,15 +26,12 @@ juju-jockey = "jockey.__main__:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
-click = "^8.1.7"
 fabric = "^3.2.2"
 invoke = "^2.2.0"
 orjson = "^3.10.7"
-xdgenvpy = "^3.0.0"
 python-slugify = "^8.0.4"
 rich-argparse = "^1.5.2"
-regex = "^2024.9.11"
-dotty-dictionary = "^1.2.0"
+xdgenvpy = "^3.0.0"
 types-xdgenvpy = "^3.0.0.20240918"
 
 [tool.poetry.group.dev.dependencies]
