@@ -115,7 +115,7 @@ class Cloud(Connection, Context):
         self,
         host: Optional[str] = None,
         doas: Optional[str] = None,
-        juju: str = "juju",
+        juju: Optional[str] = "juju",
         cache: Optional[FileCache] = None,
         timeout: Optional[int] = None,
         *args,
