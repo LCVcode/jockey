@@ -5,8 +5,16 @@
 
 from dataclasses import dataclass
 from enum import Enum
+import json
+import logging
+import os
 import re
 from typing import Any, Dict, Generator, Iterable, List, Optional
+
+from jockey.log import configure_logging
+
+
+logger = logging.getLogger(__name__)
 
 
 JujuStatus = Dict[str, Any]
@@ -856,67 +864,94 @@ RETRIEVAL_MAP = {
     ObjectType.HOSTNAME: None,
 }
 
-"""
-def main(args: argparse.Namespace):
-    # Check if 'help' was requested
-    if args.object == "info":
-        print(INFO_MESSAGE)
-        return
 
-    # Perform any requested cache refresh
-    if args.refresh:
-        cache_juju_status()
+def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300) -> JujuStatus:
+    # Prefer loading from a file, when provided
+    if file:
+        logger.debug("Loading local Juju status from %r", file)
+        # print(dir(file))
+        with open(file, "r") as f:
+            return json.loads(f.read())
 
-    # Get status
-    status = retrieve_juju_cache() if not args.file else read_local_juju_status_file(args.file)
+    model_name = model_name or os.environ["JUJU_MODEL"]
+    raise NotImplementedError
 
-    RETRIEVAL_MAP = {
-        ObjectType.CHARM: None,
-        ObjectType.APP: None,
-        ObjectType.UNIT: filter_units,
-        ObjectType.MACHINE: filter_machines,
-        ObjectType.IP: None,
-        ObjectType.HOSTNAME: None,
-    }
+    # Check for a cached status
+    # 1. Generate cache name
+    # 2. Check if cache exists
+    # 3. Check cache age
+    # 4. Return cached status or generate a new one
+    # 5. Cache the new status
+    return {}
+    """
 
-    obj_type = convert_object_abbreviation(args.object)
-    assert obj_type, f"'{args.object}' is not a valid object type."
+    # Return cached status or ask Juju for a new status
+    # configure the file cache
+    cache_dir = cache if "cache" in args else None
+    cache_age = cache_age if "cache_age" in args else None
+    cache_refresh = refresh
+    cache = FileCache(cache_dir, cache_age)
+    if cache_refresh:
+        cache.clear()
+        logger.info("Cleared file cache at %s", args.cache)
 
-    action = RETRIEVAL_MAP[obj_type]
-    assert action, f"Parsing {obj_type} is not implemented."
-    print(" ".join(action(status, args.filters)))
+    # obtain cloud configuration
+    cloud_host = host if "host" in args else None
+    cloud_user = user if "user" in args else None
+    cloud_doas = sudo if "sudo" in args else None
+    cloud_timeout = timeout if "timeout" in args else None
+    cloud_juju = juju if "juju" in args else None
+
+    # connect to the cloud and get the Juju status
+    cloud = Cloud(host=cloud_host, user=cloud_user, doas=cloud_doas, timeout=cloud_timeout, juju=cloud_juju)
+
+    try:
+        status = cloud.juju_status
+    except CloudCredentialsException as e:
+        print(Panel(e.advice_markup(), title="[red]" + e.message), file=sys.stderr)
+        return 126
+    finally:
+        cloud.close()
+    """
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description=("Jockey - A Juju query language to put all your " "Juju objects at your fingertips.")
-    )
+def query(
+    object_type: str, filter_strings: List[str], file: str = "", verbosity: int = 0
+) -> Generator[str, None, None]:
+    """
+    Perform a Jockey query.  Use this fucntion as an entry point.
 
-    # Add cache refresh flag
-    parser.add_argument("--refresh", action="store_true", help="Force a cache update")
+    Arugments
+    =========
+    object_type (str)
+        The name of the object type being queried.
+    filter_strings (List[str])
+        A list of filters as strings.
+    file (str) [optional]
+        Local Juju status file to query.  Uses cached Juju status, if empty.
+    verbosity (int) [optional]
+        Verbosity setting from 0-3 (default=0).
 
-    # Add object type argument
-    parser.add_argument(
-        "object",
-        help=f"Choose an object type to query or 'info'",
-    )
+    Returns
+    =======
+    query_result (List[str])
+        A list of objects matching the query.  May be empty.
+    """
+    logger.debug("Starting Jockey query with: object=%r filter_strings=%r", object_type, filter_strings)
+    configure_logging(verbosity)
 
-    # Add filters as positional arguments
-    parser.add_argument(
-        "filters",
-        type=parse_filter_string,
-        nargs="*",
-        help="Specify filters for your query.",
-    )
+    # Convert and validate object type to query
+    juju_object = convert_object_abbreviation(object_type)
+    assert juju_object, f"Object type '{object_type}' not recognized."
 
-    # Optional import from a json file
-    parser.add_argument(
-        "-f",
-        "--file",
-        type=argparse.FileType("r"),
-        help="Use a local Juju status JSON file",
-    )
+    # Get the approriate filtering function.  None indicates not supported.
+    filter_function = RETRIEVAL_MAP.get(juju_object, None)
+    assert filter_function, f"Querying of '{object_type}' is not yet supported."
 
-    args = parser.parse_args()
-    main(args)
-"""
+    # Convert filter strings into JockeyFilter dataclasses
+    filters = [parse_filter_string(filter_str) for filter_str in filter_strings]
+
+    # Get the relevant Juju status
+    status = get_juju_status(file=file)
+
+    return filter_function(status, filters)

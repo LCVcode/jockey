@@ -47,6 +47,8 @@ from slugify import slugify
 from xdgenvpy.xdgenv import XDGPedanticPackage
 
 
+# TODO: Remove all of this and do something *simple* instead
+
 JOCKEY_XDG = XDGPedanticPackage("jockey")
 """An instance of :mod:`xdgenvpy.XDGPedanticPackage` used to manage XDG directories for Jockey."""
 

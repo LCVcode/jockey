@@ -1,4 +1,6 @@
+from io import StringIO
 import os
+import sys
 from textwrap import dedent
 from typing import NamedTuple, Sequence
 
@@ -59,11 +61,25 @@ UNSUPPORTED_CASES = (
 def test_cli(case: Case):
     (argv, want_output, want_code) = case
 
+    original_stdout = sys.stdout
+    sys.stdout = StringIO()
+
+    try:
+        got_code = main(argv)
+        output = sys.stdout.getvalue()
+
+        assert want_code == got_code
+        assert dedent(want_output).strip() == output.strip()
+    finally:
+        sys.stdout = original_stdout
+
+    return
+
     with StandardOutputCapture() as got_output_lines:
         got_code = main(argv)
 
-    assert want_code == got_code
-    assert dedent(want_output).strip() == "\n".join(got_output_lines).strip()
+        assert want_code == got_code
+        assert dedent(want_output).strip() == "\n".join(got_output_lines).strip()
 
 
 @pytest.mark.parametrize("argv", UNSUPPORTED_CASES)

@@ -1,4 +1,4 @@
-from argparse import SUPPRESS, ArgumentParser, FileType, Namespace
+from argparse import SUPPRESS, ArgumentParser, Namespace
 from logging import getLogger
 from typing import Optional, Sequence
 
@@ -49,7 +49,7 @@ def get_parser() -> ArgumentParser:
     group_filtering.add_argument(
         "-f",
         "--file",
-        type=FileType("r"),
+        type=str,
         default=SUPPRESS,
         help="use a local Juju status JSON file",
     )
