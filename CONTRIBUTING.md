@@ -2,6 +2,8 @@
 Welcome! Thank you for your interest in contributing to _Jockey_,
 an open-source community project that aims to simplify operations on large [Juju](https://juju.is) deployments.
 
+Jockey's core querying functionality uses a purely functional programming style keep the scope narrow and maintenance easy.  No OOP-style contributions to core Jockey components will be considered.
+
 ## Contributing at a Glance
 
 1. [First-time contributors](#first-time-contributors)
