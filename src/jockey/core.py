@@ -9,8 +9,10 @@ import json
 import logging
 import os
 import re
+import subprocess
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
+from jockey.cache import load_cache, new_cache_context, update_cache
 from jockey.log import configure_logging
 
 
@@ -866,6 +868,23 @@ RETRIEVAL_MAP = {
 
 
 def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300) -> JujuStatus:
+    """
+    Loads a Juju status from a file, a Jockey cache, or the juju CLI.
+    Providing a file ignores all caching.
+    Loading a cache that is older than cache_age will trigger a re-caching of an
+    updated Juju status.
+    If model_name is not provided, it will be loaded from the JUJU_MODEL
+    environment variable.
+
+    Arguments
+    ---------
+    file (str) [optional]
+        A local file to read from.
+    model_name (str) [optional]
+        The name of a Juju model.
+    cache_age (float) [optional]
+        The maximum allowable age of a Jockey cache.
+    """
     # Prefer loading from a file, when provided
     if file:
         logger.debug("Loading local Juju status from %r", file)
@@ -873,16 +892,21 @@ def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300
         with open(file, "r") as f:
             return json.loads(f.read())
 
-    model_name = model_name or os.environ["JUJU_MODEL"]
-    raise NotImplementedError
+    # Get model name and build a CacheContext
+    model_name = model_name or os.environ.get("JUJU_MODEL", None)
+    assert model_name, "You must provide a Juju model name or have the `JUJU_MODEL` environment variable set."
+    cache_context = new_cache_context(model=model_name, max_age=cache_age)
 
-    # Check for a cached status
-    # 1. Generate cache name
-    # 2. Check if cache exists
-    # 3. Check cache age
-    # 4. Return cached status or generate a new one
-    # 5. Cache the new status
-    return {}
+    # Load cache if it is still valid
+    if cache_context.valid:
+        return load_cache(cache_context)
+
+    # Get Juju status from CLI and update cache
+    logger.debug("Running a juju command to get status")
+    status = json.loads(subprocess.run(["juju", "status", "--format", "json"], capture_output=True, text=True).stdout)
+    update_cache(cache_context, status)
+
+    return status
     """
 
     # Return cached status or ask Juju for a new status
@@ -916,7 +940,7 @@ def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300
 
 
 def query(
-    object_type: str, filter_strings: List[str], file: str = "", verbosity: int = 0
+    object_type: str, filter_strings: List[str], model: str = "", file: str = "", verbosity: int = 0
 ) -> Generator[str, None, None]:
     """
     Perform a Jockey query.  Use this fucntion as an entry point.
@@ -952,6 +976,6 @@ def query(
     filters = [parse_filter_string(filter_str) for filter_str in filter_strings]
 
     # Get the relevant Juju status
-    status = get_juju_status(file=file)
+    status = get_juju_status(file=file, model_name=model)
 
     return filter_function(status, filters)

@@ -30,6 +30,7 @@ def get_parser() -> ArgumentParser:
     )
 
     parser.add_argument("-v", "--verbose", default=0, action="count", help="increase logging verbosity")
+    parser.add_argument("-m", "--model", default="", type=str, help="Juju model name")
 
     # Filtering
     group_filtering = parser.add_argument_group("Filtering Arguments")
@@ -50,7 +51,7 @@ def get_parser() -> ArgumentParser:
         "-f",
         "--file",
         type=str,
-        default=SUPPRESS,
+        default="",
         help="use a local Juju status JSON file",
     )
 

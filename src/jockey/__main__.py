@@ -51,9 +51,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print_info()
         return 0
 
-    # TODO: Remove the `return 0` after query is working
     filters = args.filters if "filters" in args else []
-    print("\n".join(query(object_type=args.object, filter_strings=filters, file=args.file)))
+    print("\n".join(query(object_type=args.object, filter_strings=filters, file=args.file, model=args.model)))
     return 0
 
 
