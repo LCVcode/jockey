@@ -1,14 +1,13 @@
 [project]
 requires-python = ">=3.10"
 
-[tool.poetry]
 name = "jockey"
 version = "0.2.1"
 description = "A CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters."
 readme = "README.md"
 authors = [
-    "Connor Chamberlain <connor.chamberlain@canonical.com>",
-    "Pedro Castillo <pedro.castillo@canonical.com>"
+    { name = "Connor Chamberlain", email = "connor.chamberlain@canonical.com" },
+    { name = "Pedro Castillo", email = "pedro.castillo@canonical.com" },
 ]
 
 classifiers = [
@@ -17,9 +16,8 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 
-packages = [
-    { include = "jockey", from = "src" }
-]
+[tool.poetry]
+packages = [{ include = "jockey", from = "src" }]
 
 [tool.poetry.scripts]
 juju-jockey = "jockey:main"
@@ -72,9 +70,7 @@ directory = "htmlcov"
 
 [tool.pytest.ini_options]
 pythonpath = "src"
-addopts = [
-    "--import-mode=importlib",
-]
+addopts = ["--import-mode=importlib"]
 md_report = true
 md_report_verbose = 0
 md_report_color = "auto"
@@ -149,10 +145,7 @@ juju-jockey = { source = "src/jockey/__init__.py", type = "onefile", bundle = fa
 
 [tool.commitizen]
 tag_format = "v$version"
-version_files = [
-    "pyproject.toml:version",
-    "src/jockey/__init__.py"
-]
+version_files = ["pyproject.toml:version", "src/jockey/__init__.py"]
 bump_message = "bump: $current_version -> $new_version [skip ci]"
 
 [build-system]
