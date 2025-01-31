@@ -22,7 +22,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-juju-jockey = "jockey.__main__:main"
+juju-jockey = "jockey:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
@@ -145,7 +145,7 @@ version = "6.7.0"
 disable-upx = true
 
 [tool.poetry-pyinstaller-plugin.scripts]
-juju-jockey = { source = "src/jockey/__main__.py", type = "onefile", bundle = false }
+juju-jockey = { source = "src/jockey/__init__.py", type = "onefile", bundle = false }
 
 [tool.commitizen]
 tag_format = "v$version"
