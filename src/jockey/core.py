@@ -48,6 +48,7 @@ class ObjectType(Enum):
     MACHINE = ("machines", "machine", "m")
     IP = ("ips", "address", "addresses", "ip", "i")
     HOSTNAME = ("hostnames", "hostname", "host", "hosts", "h")
+    AVAILABILITY_ZONE = ("availability-zone", "availability_zone", "az", "zone")
 
 
 def list_abbreviations() -> str:
@@ -683,6 +684,33 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
     raise Exception(f"No machine found with IP {ip}")
 
 
+def machine_to_availability_zone(status: JujuStatus, machine: str) -> Optional[str]:
+    """
+    Given an machine id, get its availability zone.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    machine (str)
+        The ID of the machine to use.
+
+    Returns
+    =======
+    avaliability_zone (str)
+        The machine's avilability zone.
+    """
+    if "lxd" in machine:
+        # A container's availability zone is the same as its parent, so we grab that.
+        machine, _, _ = machine.split("/")
+    hardware = status["machines"][machine]["hardware"]
+    for entry in hardware.split():
+        key, value = entry.split("=")
+        if key == "availability-zone":
+            return value
+    return None
+
+
 def machine_to_hostname(status: JujuStatus, machine: str) -> str:
     """
     Given an machine id, get its hostname.
@@ -751,6 +779,7 @@ def filter_units(status: JujuStatus, filters: List[JockeyFilter]) -> Generator[s
     machine_filters = [f for f in filters if f.obj_type == ObjectType.MACHINE]
     ip_filters = [f for f in filters if f.obj_type == ObjectType.IP]
     hostname_filters = [f for f in filters if f.obj_type == ObjectType.HOSTNAME]
+    az_filters = [f for f in filters if f.obj_type == ObjectType.AVAILABILITY_ZONE]
 
     for unit in get_units(status):
         # Check unit filters
@@ -793,6 +822,11 @@ def filter_units(status: JujuStatus, filters: List[JockeyFilter]) -> Generator[s
         if not all(any(check_filter_match(i_filter, ip) for ip in ips) for i_filter in ip_filters):
             continue
 
+        # Check availability zone filter
+        az = machine_to_availability_zone(status, machine)
+        if not all(check_filter_match(az_filter, az) for az_filter in az_filters):
+            continue
+
         yield unit
 
 
@@ -816,6 +850,7 @@ def filter_machines(status: JujuStatus, filters: List[JockeyFilter]) -> Generato
     machine_filters = [f for f in filters if f.obj_type == ObjectType.MACHINE]
     hostname_filters = [f for f in filters if f.obj_type == ObjectType.HOSTNAME]
     ip_filters = [f for f in filters if f.obj_type == ObjectType.IP]
+    az_filters = [f for f in filters if f.obj_type == ObjectType.AVAILABILITY_ZONE]
 
     unit_filters = [f for f in filters if f.obj_type == ObjectType.UNIT]
     app_filters = [f for f in filters if f.obj_type == ObjectType.APP]
@@ -852,6 +887,11 @@ def filter_machines(status: JujuStatus, filters: List[JockeyFilter]) -> Generato
         # Check charm filters
         charms = tuple(application_to_charm(status, app) for app in apps)  # type: ignore
         if not check_filter_batch_match(charm_filters, charms):  # type: ignore
+            continue
+
+        # Check availability zone filter
+        az = machine_to_availability_zone(status, machine)
+        if not all(check_filter_match(az_filter, az) for az_filter in az_filters):
             continue
 
         yield machine
