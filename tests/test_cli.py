@@ -6,7 +6,7 @@ from typing import NamedTuple, Sequence
 
 import pytest
 
-from jockey.__main__ import main
+from jockey import main
 from tests.test_util import SAMPLES_DIR, StandardOutputCapture
 
 
