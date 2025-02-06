@@ -17,6 +17,14 @@ classifiers = [
 ]
 
 [tool.poetry]
+name = "jockey"
+version = "0.2.1"
+description = "A CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters."
+readme = "README.md"
+authors = [
+    "Connor Chamberlain <connor.chamberlain@canonical.com>",
+    "Pedro Castillo <pedro.castillo@canonical.com>",
+]
 packages = [{ include = "jockey", from = "src" }]
 
 [tool.poetry.scripts]
