@@ -41,9 +41,9 @@ class CacheContext:
         return os.path.getmtime(self.cache_path) < self.max_age
 
 
-def new_cache_context(model: str, dir_name: str = "", path: str = "", max_age: int = 0) -> CacheContext:
+def new_cache_context(model: str, dir_name: str = "", max_age: int = 0) -> CacheContext:
     """
-    Factor function for CacheContexts
+    Factory function for CacheContexts.  Has default values for the cache directory and max age.
 
     Arguments
     ---------
@@ -51,8 +51,6 @@ def new_cache_context(model: str, dir_name: str = "", path: str = "", max_age: i
         Juju model name.
     dir_name (str) [optional]
         The cache directory.  Must be used if `path` is not provided.
-    path     (str) [optional]
-        The path to the cache.
     max_age  (int) [optional]
         The maximum age of the cache, in seconds.  Uses a default when not
         provided.
