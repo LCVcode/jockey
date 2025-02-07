@@ -684,7 +684,7 @@ def ip_to_machine(status: JujuStatus, ip: str) -> str:
     raise Exception(f"No machine found with IP {ip}")
 
 
-def machine_to_availability_zone(status: JujuStatus, machine: str) -> Optional[str]:
+def machine_to_availability_zone(status: JujuStatus, machine: str) -> str:
     """
     Given an machine id, get its availability zone.
 
@@ -708,7 +708,7 @@ def machine_to_availability_zone(status: JujuStatus, machine: str) -> Optional[s
         key, value = entry.split("=")
         if key == "availability-zone":
             return value
-    return None
+    raise Exception(f"No AZ found for machine {machine}")
 
 
 def machine_to_hostname(status: JujuStatus, machine: str) -> str:
@@ -822,8 +822,9 @@ def filter_units(status: JujuStatus, filters: List[JockeyFilter]) -> Generator[s
         if not all(any(check_filter_match(i_filter, ip) for ip in ips) for i_filter in ip_filters):
             continue
 
-        # Check availability zone filter
+        # Check availability zone filters
         az = machine_to_availability_zone(status, machine)
+        assert az
         if not all(check_filter_match(az_filter, az) for az_filter in az_filters):
             continue
 
@@ -889,8 +890,9 @@ def filter_machines(status: JujuStatus, filters: List[JockeyFilter]) -> Generato
         if not check_filter_batch_match(charm_filters, charms):  # type: ignore
             continue
 
-        # Check availability zone filter
+        # Check availability zone filters
         az = machine_to_availability_zone(status, machine)
+        assert az
         if not all(check_filter_match(az_filter, az) for az_filter in az_filters):
             continue
 
