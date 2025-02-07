@@ -909,7 +909,7 @@ RETRIEVAL_MAP = {
 }
 
 
-def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300) -> JujuStatus:
+def get_juju_status(file: str = "", model_name: str = "", cache_age: int = 300) -> JujuStatus:
     """
     Loads a Juju status from a file, a Jockey cache, or the juju CLI.
     Providing a file ignores all caching.
@@ -924,7 +924,7 @@ def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300
         A local file to read from.
     model_name (str) [optional]
         The name of a Juju model.
-    cache_age (float) [optional]
+    cache_age (int) [optional]
         The maximum allowable age of a Jockey cache.
     """
     # Prefer loading from a file, when provided
@@ -935,7 +935,7 @@ def get_juju_status(file: str = "", model_name: str = "", cache_age: float = 300
             return json.loads(f.read())
 
     # Get model name and build a CacheContext
-    model_name = model_name or os.environ.get("JUJU_MODEL", None)
+    model_name = model_name or os.environ.get("JUJU_MODEL", "")
     assert model_name, "You must provide a Juju model name or have the `JUJU_MODEL` environment variable set."
     cache_context = new_cache_context(model=model_name, max_age=cache_age)
 

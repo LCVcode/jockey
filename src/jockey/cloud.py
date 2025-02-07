@@ -15,7 +15,7 @@ from invoke import Result as InvokeResult  # type: ignore[import-untyped]
 from orjson import loads as json_loads
 from paramiko.ssh_exception import PasswordRequiredException
 
-from jockey.cache import FileCache, Reference
+# from jockey.cache import FileCache, Reference
 from jockey.juju_schema.full_status import FullStatus
 
 
