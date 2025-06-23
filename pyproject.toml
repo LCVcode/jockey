@@ -62,7 +62,7 @@ sphinx-autodoc-typehints = "^2.3.0"
 sphinx-autoapi = "^3.3.2"
 types-paramiko = "^3.5.0.20240928"
 types-regex = "^2024.9.11.20240912"
-pytest-timeout = "^2.3.1"
+pytest-timeout = "^2.4.0"
 commitizen = "^3.29.1"
 argparse-manpage = "^4.6"
 
