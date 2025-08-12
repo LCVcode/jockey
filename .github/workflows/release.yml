@@ -32,7 +32,7 @@ jobs:
       new_tag_name: ${{ steps.get_new_tag.outputs.new_tag_name }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         fetch-depth: '0'   # get all history
         ref: ${{ github.event.pull_request.base.ref }}
@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.event.pull_request.base.ref }}
     - name: Snapcraft
@@ -176,7 +176,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.event.pull_request.base.ref }}
     - name: Install Python toolchain
@@ -222,7 +222,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         ref: ${{ github.event.pull_request.base.ref }}
     - name: Install Python toolchain
