@@ -42,17 +42,17 @@ The `FILTER` part of a [filter expression](#filter-expressions) determines the a
 #### Examples
 - **Equals filter**: Select units whose application name is `nrpe`:
     ```bash
-    juju-jockey unit a=nrpe
+    jockey unit a=nrpe
     ```
 - **Not Equals filter**: Select all machines which lack a unit of the application named "nrpe":
     ```bash
-    juju-jockey machine app^=nrpe
+    jockey machine app^=nrpe
     ```
 - **Contains filter**: Select items where the hostname contains "juju":
     ```bash
-    juju-jockey machines hostname~juju
+    jockey machines hostname~juju
     ```
 - **Not Contains filter**: Select all non-LXD machines:
     ```bash
-    juju-jockey m m^~lxd
+    jockey m m^~lxd
     ```

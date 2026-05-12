@@ -37,16 +37,16 @@ Jockey object name abbreviations:
 .SH EXAMPLES
 .RS 4
 .nf
-.B juju-jockey units
+.B jockey units
 get all units
 
-.B juju-jockey units application=nova-compute
+.B jockey units application=nova-compute
 get all \\fBnova-compute\\fR units
 
-.B juju-jockey u a=hw-health host~e01
+.B jockey u a=hw-health host~e01
 get all \\fBhw-health\\fR units on hostname like "e01"
 
-.B juju-jockey m m^~lxd
+.B jockey m m^~lxd
 get all non-LXD machines
 .RE
 """

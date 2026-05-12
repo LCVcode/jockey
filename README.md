@@ -83,7 +83,7 @@ When filtering units or machines, you can reference these Juju objects:
 ### Command structure
 
 ```
-juju-jockey <OBJECT> [FILTER ...] [OPTIONS]
+jockey <OBJECT> [FILTER ...] [OPTIONS]
 ```
 
 - `<OBJECT>`: A queryable object type (`u` or `m`) or alias
@@ -104,53 +104,53 @@ juju-jockey <OBJECT> [FILTER ...] [OPTIONS]
 
 #### Get all units
 ```bash
-juju-jockey u
+jockey u
 ```
 
 #### Get all machines
 ```bash
-juju-jockey m
+jockey m
 ```
 
 #### Filter units by application name
 ```bash
-juju-jockey u app=etcd
+jockey u app=etcd
 ```
 Returns all units of the `etcd` application.
 
 #### Filter units by charm name
 ```bash
-juju-jockey u charm=nrpe
+jockey u charm=nrpe
 ```
 Returns all units running the `nrpe` charm.
 
 #### Filter machines by hostname substring
 ```bash
-juju-jockey m host~node
+jockey m host~node
 ```
 Returns machines whose hostname contains "node".
 
 #### Filter units on specific machines
 ```bash
-juju-jockey u machine=0
+jockey u machine=0
 ```
 Returns units running on machine `0` (and its containers).
 
 #### Combine multiple filters
 ```bash
-juju-jockey u app=nova machine^=0
+jockey u app=nova machine^=0
 ```
 Returns units of the `nova` application that are NOT on machine `0`.
 
 #### Exclude container machines
 ```bash
-juju-jockey m m^~lxd
+jockey m m^~lxd
 ```
 Returns all non-LXD machines (physical machines only).
 
 #### Query a local Juju status file
 ```bash
-juju-jockey u --file /tmp/status.json app=mysql
+jockey u --file /tmp/status.json app=mysql
 ```
 Returns `mysql` units from a local status file.
 

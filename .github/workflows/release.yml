@@ -150,7 +150,7 @@ jobs:
     - name: Upload Snap artifact
       uses: actions/upload-artifact@v4
       with:
-        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.snap
+        name: jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.snap
         path: ${{ steps.snapcraft.outputs.snap }}
 
   build-executables:
@@ -199,22 +199,22 @@ jobs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root --all-extras --with dev
     - name: Build executable
-      run: poetry run pyinstaller --name=juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }} --onefile src/jockey/__main__.py
+      run: poetry run pyinstaller --name=jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }} --onefile src/jockey/__main__.py
     - name: Upload executable
       uses: actions/upload-artifact@v4
       with:
-        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
-        path: dist/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
+        name: jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
+        path: dist/jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}${{ matrix.executable_ext }}
     - name: Upload spec
       uses: actions/upload-artifact@v4
       with:
-        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
-        path: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
+        name: jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
+        path: jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}.spec
     - name: Upload build directory
       uses: actions/upload-artifact@v4
       with:
-        name: juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}-build
-        path: build/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}
+        name: jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}-build
+        path: build/jockey-${{ needs.bump-version.outputs.new_tag_name }}-${{ matrix.executable_os }}
 
   release:
     name: Release
@@ -262,9 +262,9 @@ jobs:
         body_path: release-artifacts/CHANGELOG-incremental/CHANGELOG-incremental.md
         tag_name: ${{ needs.bump-version.outputs.new_tag_name }}
         files: |
-          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-linux
-          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-macOS
-          **/juju-jockey-${{ needs.bump-version.outputs.new_tag_name }}-win.exe
+          **/jockey-${{ needs.bump-version.outputs.new_tag_name }}-linux
+          **/jockey-${{ needs.bump-version.outputs.new_tag_name }}-macOS
+          **/jockey-${{ needs.bump-version.outputs.new_tag_name }}-win.exe
     - name: Determine if PYPI_TOKEN is available
       id: has_pypi
       run: echo 'result=${{ secrets.PYPI_TOKEN }}' >> $GITHUB_OUTPUT

@@ -33,7 +33,7 @@ def get_parser() -> ArgumentParser:
     generating_man: bool = __name__ == "<run_path>"
 
     parser = ArgumentParser(
-        prog="juju-jockey",
+        prog="jockey",
         description=__doc__,
         epilog=PLAIN_EPILOG if generating_man else RICH_EPILOG,
         formatter_class=ArgumentDefaultsHelpFormatter,

@@ -1,6 +1,6 @@
-name: juju-jockey
+name: jockey
 base: core22
-adopt-info: juju-jockey
+adopt-info: jockey
 summary: Jockey is a utility for filtering and navigating Juju objects
 description: |
   Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.
@@ -21,23 +21,28 @@ plugs:
     interface: personal-files
     read:
     - $HOME/.local/share/juju
-    - $HOME/.local/share/juju/ssh
-    - $HOME/.local/share/juju/lxd
     write:
-    - $HOME/.local/share/juju/cookies
+    - $HOME/.local/share/juju
+  dot-local-share-jockey:
+    interface: personal-files
+    read:
+    - $HOME/.local/share/jockey
+    write:
+    - $HOME/.local/share/jockey
 
 apps:
-  juju-jockey:
-    command: bin/juju-jockey
+  jockey:
+    command: bin/jockey
+    environment:
+      PATH: $SNAP/usr/juju/bin:$PATH
     plugs:
     - juju-bin
     - dot-local-share-juju
-    - home
-    - ssh-keys
+    - dot-local-share-jockey
     - network
 
 parts:
-  juju-jockey:
+  jockey:
     plugin: python
     source: .
     source-type: local

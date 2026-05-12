@@ -13,7 +13,7 @@ SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.dirname(SCRIPTS_DIR)
 INFO_PATH = os.path.join(REPO_DIR, "src", "jockey", "info.md")
 ARGS_PATH = os.path.join(REPO_DIR, "src", "jockey", "__args__.py")
-OUTPUT_PATH = os.path.join(REPO_DIR, "man", "juju-jockey.1")
+OUTPUT_PATH = os.path.join(REPO_DIR, "man", "jockey.1")
 
 
 def run(*command: str) -> (str, str, int):

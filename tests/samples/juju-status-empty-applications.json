@@ -106,7 +106,7 @@
       "constraints": "cores=2 mem=8192M root-disk=16384M",
       "hardware": "arch=amd64 cores=2 mem=8192M virt-type=container",
       "lxd-profiles": {
-        "juju-jockey-kubernetes-control-plane-416": {
+        "jockey-kubernetes-control-plane-416": {
           "config": {
             "linux.kernel_modules": "ip_tables,ip6_tables,netlink_diag,nf_nat,overlay,rbd,ip_vs,ip_vs_rr,ip_vs_wrr,ip_vs_sh",
             "raw.lxc": "lxc.apparmor.profile=unconfined\nlxc.mount.auto=proc:rw sys:rw\nlxc.cgroup.devices.allow=a\nlxc.cap.drop=\n",
@@ -402,7 +402,7 @@
       "charm-name": "kubernetes-control-plane",
       "charm-rev": 416,
       "charm-channel": "stable",
-      "charm-profile": "juju-jockey-kubernetes-control-plane-416",
+      "charm-profile": "jockey-kubernetes-control-plane-416",
       "exposed": true,
       "application-status": {
         "current": "waiting",
