@@ -24,7 +24,10 @@
 
 ## Overview
 
-Jockey is a CLI tool designed to facilitate quick and easy retrieval of Juju objects using filters.  It uses automatic caching of Juju's status in json format to enable faster parsing.
+Jockey is a CLI tool for querying Juju model data with concise filter expressions.
+It currently supports querying **units** and **machines** and can filter them
+using related object values (applications, charms, hostnames, IPs, and
+availability zones).
 
 Jockey relies on this model of Juju objects and how they are related:
 ```mermaid
@@ -39,135 +42,77 @@ flowchart LR
     M -->|Metadata| M_H(Hostname)
 ```
 
-All filtering actions are performed by navigating this tree.
+All filters are evaluated by traversing these relationships.
 
-## Command Anatomy
+## Current support
 
-The anatomy of a Jockey command is as follows:
+### Query targets
+
+Only the following `OBJECT` query targets are currently supported:
+
+- `unit`, `units`, `u`
+- `machine`, `machines`, `m`
+
+Other object aliases are valid in **filter expressions** but are not currently
+valid as top-level query targets.
+
+### Filter object aliases
+
+You can filter unit or machine results using these object aliases:
+
+- **Charm:** `charm`, `charms`, `c`
+- **Application:** `application`, `applications`, `app`, `apps`, `a`
+- **Unit:** `unit`, `units`, `u`
+- **Machine:** `machine`, `machines`, `m`
+- **IP:** `ips`, `address`, `addresses`, `ip`, `i`
+- **Hostname:** `hostnames`, `hostname`, `host`, `hosts`, `h`
+- **Availability Zone:** `availability-zone`, `availability_zone`, `az`, `zone`
+
+### Filter operators
+
+| Token | Meaning |
+|---|---|
+| `=` | equals |
+| `^=` | not equals |
+| `~` | contains |
+| `^~` | does not contain |
+
+## Command anatomy
+
+The CLI shape is:
+
 ```
-jockey <object> <filters> <options>
-```
-
-`<object>` refers to any of the searchable Juju objects, such as applications and units.  `<filters>` is a space delimited list of filters (see below).
-
-### Filters
-
-Filters follow a specific syntax and allow the user to limit Jockey's output to meet certain criteria.  All filters have this structure:
-```
-<object><filter-code><content>
-```
-Just like in the origial `jockey` command anatomy, `<object>` is any of the searchable Juju objects.
-
-## Examples:
-
-<!-- jockey units -->
-<details>
-<summary><code>juju-jockey units</code></summary>
-<pre>
-ceph-osd/0 telegraf-ceph/2 ceph-osd/1 telegraf-ceph/1 ceph-osd/2 telegraf-ceph/0 mysql-innodb-cluster/0 telegraf-mysql/0
-</pre>
-</details>
-
-<!-- jockey units charm=ceph-osd -->
-<details>
-<summary><code>juju-jockey units charm=ceph-osd</code></summary>
-<pre>
-ceph-osd/0 ceph-osd/1 ceph-osd/2
-</pre>
-</details>
-
-<!-- jockey charms machine=1 -->
-<details>
-<summary><code>juju-jockey charms machine=1</code></summary>
-
-> **Note**
-> Sorry, the `machine` filter is not yet implemented; stay tuned!
-
-</details>
-
-<!-- jockey app charm=charm-nrpe machine=4/lxd/2 -->
-<details>
-<summary><code>juju-jockey app charm=charm-nrpe machine=4/lxd/2</code></summary>
-
-> **Note**
-> Sorry, the `app` filter is not yet implemented; stay tuned!
-
-</details>
-
-<!-- jockey units app^=nova principal=true hostname~blrt -->
-<details>
-<summary><code>juju-jockey units app^=nova principal=true hostname~blrt</code></summary>
-
-> **Note**
-> Sorry, the `app` filter is not yet implemented; stay tuned!
-
-</details>
-
-## Wishlist:
-
-### Multi-object querying
-
-Currently, Jockey only supports querying single object types.  This change would enable Jockey to return formatted object mappings, to see the relationship between various objects.
-
-This proposed example shows a mapping of machines, which match the given filters, to their respective hostnames and IP addresses
-```bash
-$ juju-jockey m,hostname,ip c=nova-compute c=ceph-osd
-+----+-------------+
-|  8 | node5       |
-|    | 10.210.3.11 |
-+----+-------------+
-| 83 | node6       |
-|    | 10.210.3.12 |
-+----+-------------+
-| 97 | node11      |
-|    | 10.210.3.17 |
-+----+-------------+
-| 99 | node13      |
-|    | 10.210.3.19 |
-+----+-------------+
-...
+juju-jockey <OBJECT> [EXPRESSION ...] [OPTIONS]
 ```
 
-### Filtering by leadership (on reasonable object types)
+Each filter expression has this form:
 
-```bash
-$ juju-jockey u leader=true
-<list of all leader units>
-
-$ juju-jockey a leader=true
-<warning: leadership does not apply to applications>
+```
+<OBJECT><OPERATOR><CONTENT>
 ```
 
-### Filtering by principal
+Examples:
 
-```bash
-$ juju-jockey u principal=true
-<list of all principal units>
+- List all units:
+  ```bash
+  juju-jockey units
+  ```
+- List machines that have a unit from application `etcd`:
+  ```bash
+  juju-jockey machines app=etcd
+  ```
+- List units on machines with hostnames containing `node`:
+  ```bash
+  juju-jockey units host~node
+  ```
+- List non-LXD machines:
+  ```bash
+  juju-jockey m m^~lxd
+  ```
 
-$ juju-jockey c p=true
-<list of all principal charms>
+## Data sources and caching
 
-$ juju-jockey machine p=true
-<warning: principal filter does not apply to machines>
-```
-
-### Option to return only first result
-
-```bash
-# Current functionality:
-$ juju-jockey u c=hw-health h~node11
-hw-health/20 hw-health/2
-
-# Proposed:
-$ juju-jockey u c=hw-health h~node11 --first
-hw-health/20
-```
-
-### Remote Juju status caching
-
-This feature is parially implemented in the `master` branch.
-
-Creates a local cache of the remote Juju found at `infra.customer.address` as the user `jujuadmin`:
-```
-$ juju-jockey u -R infra.customer.address -U jujuadmin c=hw-health h~node8
-```
+- `--file /path/to/status.json` queries a local Juju status JSON file.
+- Without `--file`, Jockey queries Juju CLI output and uses a local cache.
+- The in-memory status used for filtering is intentionally narrowed to fields
+  needed by the currently supported query/filter paths.

@@ -15,6 +15,7 @@ To simplify operations, _Jockey_ supports shorthand aliases for Juju objects. Th
 - **Machine:** `machine`, `machines`, `m`
 - **IP:** `ips`, `address`, `addresses`, `ip`, `i`
 - **Hostname:** `hostnames`, `hostname`, `host`, `hosts`, `h`
+- **Availability Zone:** `availability-zone`, `availability_zone`, `az`, `zone`
 
 ## Filters
 ### Filter Expressions
@@ -26,7 +27,7 @@ _Filter expressions_ follow a structured syntax:
 Where:
 - `OBJECT`: A supported [Juju object](#objects) or its [alias](#aliases-for-objects).
 - `FILTER`: Determines how _Jockey_ should filter the objects relative to `QUERY`.
-- `QUERY`: The value to compare with the resolved value of `OBJECT` and `.FIELD`.
+- `QUERY`: The value to compare with the resolved value of `OBJECT`.
 
 ### Supported Filters
 The `FILTER` part of a [filter expression](#filter-expressions) determines the action to perform. _Jockey_ supports the following filtering actions:
@@ -38,8 +39,8 @@ The `FILTER` part of a [filter expression](#filter-expressions) determines the a
 | `~`      | Contains     | Check if a value contains another         |
 | `^~`     | Not Contains | Check if a value does not contain another |
 
-#### Examples:
-- **Equals filter**: Selet units whose application name is "nrpe":
+#### Examples
+- **Equals filter**: Select units whose application name is `nrpe`:
     ```bash
     juju-jockey unit a=nrpe
     ```
@@ -51,8 +52,7 @@ The `FILTER` part of a [filter expression](#filter-expressions) determines the a
     ```bash
     juju-jockey machines hostname~juju
     ```
-- **Not Containers filter**: Select all non-LXD machines:
+- **Not Contains filter**: Select all non-LXD machines:
     ```bash
     juju-jockey m m^~lxd
     ```
-
