@@ -9,8 +9,8 @@ import logging
 from typing import Generator, List
 
 from jockey.filtering import (
-    JockeyFilter,
     FilterMode,
+    JockeyFilter,
     check_filter_batch_match,
     check_filter_match,
     negative_filters,

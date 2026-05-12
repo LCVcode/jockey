@@ -4,7 +4,6 @@ import os
 from jockey.core import query
 from jockey.juju_conversions import charm_to_applications, get_hostnames, get_ips, hostname_to_machine
 from jockey.status_loader import get_juju_status
-
 from tests.test_util import SAMPLES_DIR
 
 

@@ -20,9 +20,7 @@ def _project_unit_status(unit_data: Dict[str, Any]) -> Dict[str, Any]:
         projected_unit["machine"] = unit_data["machine"]
 
     raw_subordinates = unit_data.get("subordinates", {})
-    projected_unit["subordinates"] = {
-        subordinate_name: {} for subordinate_name in raw_subordinates
-    }
+    projected_unit["subordinates"] = {subordinate_name: {} for subordinate_name in raw_subordinates}
 
     return projected_unit
 
@@ -38,8 +36,7 @@ def _project_status(raw_status: Dict[str, Any]) -> JujuStatus:
             projected_app["subordinate-to"] = app_data["subordinate-to"]
         if "units" in app_data:
             projected_app["units"] = {
-                unit_name: _project_unit_status(unit_data)
-                for unit_name, unit_data in app_data["units"].items()
+                unit_name: _project_unit_status(unit_data) for unit_name, unit_data in app_data["units"].items()
             }
 
         projected_applications[app_name] = projected_app
@@ -57,9 +54,7 @@ def _project_status(raw_status: Dict[str, Any]) -> JujuStatus:
         if "containers" in machine_data:
             projected_machine["containers"] = {
                 container_name: {
-                    key: container_data[key]
-                    for key in ("hostname", "ip-addresses")
-                    if key in container_data
+                    key: container_data[key] for key in ("hostname", "ip-addresses") if key in container_data
                 }
                 for container_name, container_data in machine_data["containers"].items()
             }
