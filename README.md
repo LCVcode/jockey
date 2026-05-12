@@ -44,71 +44,115 @@ flowchart LR
 
 All filters are evaluated by traversing these relationships.
 
-## Current support
+## Quick reference
 
-### Query targets
+### Queryable objects
 
-Only the following `OBJECT` query targets are currently supported:
+Only these object types can be queried as the top-level `OBJECT`:
 
-- `unit`, `units`, `u`
-- `machine`, `machines`, `m`
+| Name | Aliases |
+|---|---|
+| Unit | `unit`, `units`, `u` |
+| Machine | `machine`, `machines`, `m` |
 
-Other object aliases are valid in **filter expressions** but are not currently
-valid as top-level query targets.
+### Filterable attributes
 
-### Filter object aliases
+When filtering units or machines, you can reference these Juju objects:
 
-You can filter unit or machine results using these object aliases:
-
-- **Charm:** `charm`, `charms`, `c`
-- **Application:** `application`, `applications`, `app`, `apps`, `a`
-- **Unit:** `unit`, `units`, `u`
-- **Machine:** `machine`, `machines`, `m`
-- **IP:** `ips`, `address`, `addresses`, `ip`, `i`
-- **Hostname:** `hostnames`, `hostname`, `host`, `hosts`, `h`
-- **Availability Zone:** `availability-zone`, `availability_zone`, `az`, `zone`
+| Attribute | Aliases |
+|---|---|
+| Charm | `charm`, `charms`, `c` |
+| Application | `application`, `applications`, `app`, `apps`, `a` |
+| Unit | `unit`, `units`, `u` |
+| Machine | `machine`, `machines`, `m` |
+| IP address | `ips`, `address`, `addresses`, `ip`, `i` |
+| Hostname | `hostnames`, `hostname`, `host`, `hosts`, `h` |
+| Availability Zone | `availability-zone`, `availability_zone`, `az`, `zone` |
 
 ### Filter operators
 
-| Token | Meaning |
+| Operator | Behavior |
 |---|---|
-| `=` | equals |
-| `^=` | not equals |
-| `~` | contains |
-| `^~` | does not contain |
+| `=` | Value equals |
+| `^=` | Value does not equal |
+| `~` | Value contains substring |
+| `^~` | Value does not contain substring |
 
-## Command anatomy
+## Usage
 
-The CLI shape is:
-
-```
-juju-jockey <OBJECT> [EXPRESSION ...] [OPTIONS]
-```
-
-Each filter expression has this form:
+### Command structure
 
 ```
-<OBJECT><OPERATOR><CONTENT>
+juju-jockey <OBJECT> [FILTER ...] [OPTIONS]
 ```
 
-Examples:
+- `<OBJECT>`: A queryable object type (`u` or `m`) or alias
+- `[FILTER ...]`: Zero or more filter expressions
+- `[OPTIONS]`: `--file <path>` to query a Juju status JSON file
 
-- List all units:
-  ```bash
-  juju-jockey units
-  ```
-- List machines that have a unit from application `etcd`:
-  ```bash
-  juju-jockey machines app=etcd
-  ```
-- List units on machines with hostnames containing `node`:
-  ```bash
-  juju-jockey units host~node
-  ```
-- List non-LXD machines:
-  ```bash
-  juju-jockey m m^~lxd
-  ```
+### Filter expression syntax
+
+```
+<ATTRIBUTE><OPERATOR><VALUE>
+```
+
+- `<ATTRIBUTE>`: A filterable attribute (e.g., `app`, `host`, `charm`)
+- `<OPERATOR>`: One of `=`, `^=`, `~`, `^~`
+- `<VALUE>`: The string to match
+
+### Examples
+
+#### Get all units
+```bash
+juju-jockey u
+```
+
+#### Get all machines
+```bash
+juju-jockey m
+```
+
+#### Filter units by application name
+```bash
+juju-jockey u app=etcd
+```
+Returns all units of the `etcd` application.
+
+#### Filter units by charm name
+```bash
+juju-jockey u charm=nrpe
+```
+Returns all units running the `nrpe` charm.
+
+#### Filter machines by hostname substring
+```bash
+juju-jockey m host~node
+```
+Returns machines whose hostname contains "node".
+
+#### Filter units on specific machines
+```bash
+juju-jockey u machine=0
+```
+Returns units running on machine `0` (and its containers).
+
+#### Combine multiple filters
+```bash
+juju-jockey u app=nova machine^=0
+```
+Returns units of the `nova` application that are NOT on machine `0`.
+
+#### Exclude container machines
+```bash
+juju-jockey m m^~lxd
+```
+Returns all non-LXD machines (physical machines only).
+
+#### Query a local Juju status file
+```bash
+juju-jockey u --file /tmp/status.json app=mysql
+```
+Returns `mysql` units from a local status file.
 
 ## Data sources and caching
 
