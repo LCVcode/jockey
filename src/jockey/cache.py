@@ -46,7 +46,7 @@ def new_cache_context(model: str, dir_name: str = "", max_age: int = 0) -> Cache
     Factory function for CacheContexts.  Has default values for the cache directory and max age.
 
     Arguments
-    ---------
+    =========
     model    (str)
         Juju model name.
     dir_name (str) [optional]
@@ -56,7 +56,7 @@ def new_cache_context(model: str, dir_name: str = "", max_age: int = 0) -> Cache
         provided.
 
     Returns
-    -------
+    =======
     context (CacheContext)
         CacheContext object for this Jockey cache.
     """
@@ -68,7 +68,7 @@ def update_cache(context: CacheContext, data: Dict[str, Any]) -> None:
     Write new data to a Jockey cache.
 
     Arguments
-    ---------
+    =========
     context (CacheContext)
         The Jockey cache context to use.
     data    (Dict[str, Any])
@@ -89,12 +89,12 @@ def load_cache(context: CacheContext) -> Dict[str, Any]:
     Raises and AssertionError if the cache is not found.
 
     Arguments
-    ---------
+    =========
     context (CacheContext)
         The Jockey cache context to use.
 
     Returns
-    -------
+    =======
     data    (Dict[str, Any])
         The loaded Jockey cache.
     """

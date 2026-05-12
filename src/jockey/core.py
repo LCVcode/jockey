@@ -3,6 +3,8 @@
 # match given filters.
 # Author: Connor Chamberlain
 
+"""Core filter parsing and Juju object query helpers for Jockey."""
+
 from dataclasses import dataclass
 from enum import Enum
 import json
@@ -23,6 +25,8 @@ JujuStatus = Dict[str, Any]
 
 
 class FilterMode(Enum):
+    """Supported filter operators for Jockey query expressions."""
+
     EQUALS = "="
     CONTAINS = "~"
     NOT_EQUALS = "^="
@@ -42,6 +46,8 @@ NEGATIVE_MODES = (
 
 
 class ObjectType(Enum):
+    """Supported object types and their accepted abbreviations."""
+
     CHARM = ("charms", "charm", "c")
     APP = ("applications", "app", "apps", "application", "a")
     UNIT = ("units", "unit", "u")
@@ -52,6 +58,14 @@ class ObjectType(Enum):
 
 
 def list_abbreviations() -> str:
+    """
+    Build a display table of object types and their short names.
+
+    Returns
+    =======
+    abbreviations (str)
+        A formatted table containing object names and abbreviations.
+    """
     pad = 15
 
     header = "OBJECT TYPE".ljust(pad, " ") + "SHORT NAMES"
@@ -123,6 +137,8 @@ Jockey object name abbreviations:
 
 @dataclass
 class JockeyFilter:
+    """Parsed representation of a single Jockey filter expression."""
+
     obj_type: ObjectType
     mode: FilterMode
     content: str
@@ -131,7 +147,19 @@ class JockeyFilter:
 def positive_filters(
     filters: Iterable[JockeyFilter],
 ) -> Generator[JockeyFilter, None, None]:
-    """Extract the positive filters from a group of filters."""
+    """
+    Extract positive filters from a group of parsed filters.
+
+    Arguments
+    =========
+    filters (Iterable[JockeyFilter])
+        Filters to inspect.
+
+    Returns
+    =======
+    positive (Generator[JockeyFilter, None, None])
+        A generator containing only positive filters.
+    """
     for f in filters:
         if f.mode in POSITIVE_MODES:
             yield f
@@ -140,7 +168,19 @@ def positive_filters(
 def negative_filters(
     filters: Iterable[JockeyFilter],
 ) -> Generator[JockeyFilter, None, None]:
-    """Extract the negative filters from a group of filters."""
+    """
+    Extract negative filters from a group of parsed filters.
+
+    Arguments
+    =========
+    filters (Iterable[JockeyFilter])
+        Filters to inspect.
+
+    Returns
+    =======
+    negative (Generator[JockeyFilter, None, None])
+        A generator containing only negative filters.
+    """
     for f in filters:
         if f.mode in NEGATIVE_MODES:
             yield f
@@ -171,8 +211,15 @@ def parse_filter_string(
     """
     Parse a filter string down into its object type, filter code, and content.
 
-    :param filter_str str: The raw filter string.
-    :return jockey_filter (JockeyFilter): A filter that matches the given filter string.
+    Arguments
+    =========
+    filter_str (str)
+        The raw filter string.
+
+    Returns
+    =======
+    jockey_filter (JockeyFilter)
+        A filter that matches the given filter string.
     """
 
     # Regex to extract characters in the filter code
@@ -298,7 +345,21 @@ def is_app_principal(status: JujuStatus, app_name: str) -> bool:
 
 
 def get_principal_unit_for_subordinate(status: JujuStatus, unit_name: str) -> str:
-    """Get the name of a princpal unit for a given subordinate unit."""
+    """
+    Get a principal unit name for the given subordinate unit.
+
+    Arguments
+    =========
+    status (JujuStatus)
+        The current Juju status in json format.
+    unit_name (str)
+        The subordinate unit name.
+
+    Returns
+    =======
+    principal_unit (str)
+        The corresponding principal unit name, if found.
+    """
     for app, data in status["applications"].items():
 
         # Skip other subordinate applications
@@ -919,7 +980,7 @@ def get_juju_status(file: str = "", model_name: str = "", cache_age: int = 300) 
     environment variable.
 
     Arguments
-    ---------
+    =========
     file (str) [optional]
         A local file to read from.
     model_name (str) [optional]

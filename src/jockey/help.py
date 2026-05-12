@@ -1,3 +1,5 @@
+"""Help text templates used by the Jockey CLI."""
+
 # TODO: INFO FORMATS
 TEMPLATE_ROFF = """
 .SH NOTE

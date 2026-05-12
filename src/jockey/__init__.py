@@ -37,12 +37,28 @@ if "SNAP" in os.environ:
 
 
 def info() -> Markdown:
+    """
+    Get the Jockey information document as rich Markdown.
+
+    Returns
+    =======
+    info (Markdown)
+        Renderable Markdown content from the packaged info document.
+    """
     info_data = get_data("jockey", "info.md")
     info_decoded = info_data.decode("utf-8") if info_data else ""
     return Markdown(info_decoded)
 
 
 def print_info(console: Optional[Console] = None) -> None:
+    """
+    Render the information document to a console.
+
+    Arguments
+    =========
+    console (Console) [optional]
+        The console to render to. Uses a default console when not provided.
+    """
     if not console:
         console = Console(width=120)
 
@@ -50,6 +66,19 @@ def print_info(console: Optional[Console] = None) -> None:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    """
+    Run the Jockey CLI entrypoint.
+
+    Arguments
+    =========
+    argv (Sequence[str]) [optional]
+        Command-line arguments. Uses sys.argv[1:] when not provided.
+
+    Returns
+    =======
+    exit_code (int)
+        Process exit code for the CLI invocation.
+    """
     # parse command-line arguments and configure logging
     if argv is None:
         argv = sys.argv[1:]

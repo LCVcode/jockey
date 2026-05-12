@@ -1,3 +1,5 @@
+"""TypedDict schema definitions for Juju full-status JSON payloads."""
+
 from typing import Any, Dict, List, TypedDict
 
 from typing_extensions import Required

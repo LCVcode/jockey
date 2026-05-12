@@ -1,3 +1,5 @@
+"""Command-line argument parsing for the Jockey CLI."""
+
 from argparse import SUPPRESS, ArgumentParser, Namespace
 from logging import getLogger
 from typing import Optional, Sequence
@@ -20,6 +22,14 @@ PLAIN_EPILOG = f"Version {__version__} | {__repository__} | {__issues__}"
 
 
 def get_parser() -> ArgumentParser:
+    """
+    Build and return the argument parser for the Jockey CLI.
+
+    Returns
+    =======
+    parser (ArgumentParser)
+        Configured argument parser for the CLI.
+    """
     generating_man: bool = __name__ == "<run_path>"
 
     parser = ArgumentParser(
@@ -98,4 +108,17 @@ def get_parser() -> ArgumentParser:
 
 
 def parse_args(argv: Optional[Sequence[str]]) -> Namespace:
+    """
+    Parse command-line arguments for Jockey.
+
+    Arguments
+    =========
+    argv (Optional[Sequence[str]])
+        Raw command-line arguments to parse.
+
+    Returns
+    =======
+    args (Namespace)
+        Parsed arguments as an argparse Namespace.
+    """
     return get_parser().parse_args(argv)

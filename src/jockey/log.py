@@ -1,3 +1,5 @@
+"""Logging configuration for the Jockey CLI."""
+
 import logging
 import os
 
@@ -13,6 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 def configure_logging(verbosity: int) -> None:
+    """
+    Configure global logging handlers and traceback rendering.
+
+    Arguments
+    =========
+    verbosity (int)
+        Verbosity level from CLI flags.
+    """
     levels = {
         0: logging.ERROR,
         1: logging.WARN,
