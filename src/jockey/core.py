@@ -134,8 +134,8 @@ def query(
 
     Returns
     =======
-    query_result (List[str])
-        A list of objects matching the query.  May be empty.
+    query_result (Generator[str, None, None])
+        A generator of objects matching the query. May be empty.
     """
     logger.debug("Starting Jockey query with: object=%r filter_strings=%r", object_type, filter_strings)
     configure_logging(verbosity)

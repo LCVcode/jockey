@@ -16,7 +16,7 @@ from orjson import loads as json_loads
 from paramiko.ssh_exception import PasswordRequiredException
 
 # from jockey.cache import FileCache, Reference
-from jockey.juju_schema.full_status import FullStatus
+from jockey.types import JujuStatus
 
 
 JUJU_CONTROLLER_ENV_VAR = "JUJU_CONTROLLER"
@@ -277,7 +277,7 @@ class Cloud(Connection, Context):
         return WhoAmI(json_whoami["controller"], json_whoami["model"])
 
     @cached_property
-    def juju_status(self) -> FullStatus:
+    def juju_status(self) -> JujuStatus:
         whoami = self.juju_whoami
         controller = whoami.controller
         model = whoami.model

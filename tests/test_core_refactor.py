@@ -3,6 +3,7 @@ import os
 
 from jockey.core import query
 from jockey.juju_conversions import charm_to_applications, get_hostnames, get_ips, hostname_to_machine
+from jockey.status_loader import get_juju_status
 
 from tests.test_util import SAMPLES_DIR
 
@@ -45,3 +46,21 @@ def test_charm_to_applications_maps_charms_correctly():
     status = load_status()
     assert list(charm_to_applications(status, "etcd")) == ["etcd"]
     assert list(charm_to_applications(status, "missing-charm")) == []
+
+
+def test_status_loader_projects_only_query_fields():
+    status = get_juju_status(file=K8S_SAMPLE_PATH)
+
+    assert sorted(status.keys()) == ["applications", "machines"]
+    assert "model" not in status
+    assert "offers" not in status
+
+    easyrsa = status["applications"]["easyrsa"]
+    assert sorted(easyrsa.keys()) == ["charm", "units"]
+    unit = easyrsa["units"]["easyrsa/0"]
+    assert sorted(unit.keys()) == ["machine", "subordinates"]
+
+    machine = status["machines"]["0"]
+    assert sorted(machine.keys()) == ["containers", "hardware", "hostname", "ip-addresses"]
+    container = machine["containers"]["0/lxd/0"]
+    assert sorted(container.keys()) == ["hostname", "ip-addresses"]

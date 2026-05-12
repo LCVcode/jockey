@@ -1,6 +1,4 @@
-"""
-This module provides a simple caching solutin of Juju statuses in JSON format.
-"""
+"""Cache helpers for storing and loading Juju status JSON snapshots."""
 
 from dataclasses import dataclass
 import json
@@ -15,7 +13,7 @@ DEFAULT_MAX_AGE = 300  # Default cache max age is five minutes
 @dataclass(frozen=True)
 class CacheContext:
     """
-    This data class caputes information to identify unique caches.
+    Immutable cache metadata used to identify a model-specific cache file.
     """
 
     cache_dir: str  # Path to cache directory
@@ -25,15 +23,14 @@ class CacheContext:
     @property
     def cache_path(self) -> str:
         """
-        The fully qualified path to the Jockey cache.
+        The absolute filesystem path of the cache file.
         """
         return os.path.join(self.cache_dir, f"cache_{self.juju_model}.json")
 
     @property
     def valid(self) -> bool:
         """
-        Check if the cache exists and is current.  Returns False if the cache
-        needs to be refreshed.
+        Return whether the cache file exists and passes the current validity check.
         """
         if not os.path.exists(self.cache_path):
             return False
@@ -43,14 +40,14 @@ class CacheContext:
 
 def new_cache_context(model: str, dir_name: str = "", max_age: int = 0) -> CacheContext:
     """
-    Factory function for CacheContexts.  Has default values for the cache directory and max age.
+    Build a cache context with defaults for cache directory and max age.
 
     Arguments
     =========
     model    (str)
         Juju model name.
     dir_name (str) [optional]
-        The cache directory.  Must be used if `path` is not provided.
+        The cache directory.
     max_age  (int) [optional]
         The maximum age of the cache, in seconds.  Uses a default when not
         provided.
@@ -84,9 +81,9 @@ def update_cache(context: CacheContext, data: Dict[str, Any]) -> None:
 
 def load_cache(context: CacheContext) -> Dict[str, Any]:
     """
-    Loads a Jockey cache, regardless of its age.
+    Load cached JSON data from disk.
 
-    Raises and AssertionError if the cache is not found.
+    Raises an AssertionError if the cache file is not found.
 
     Arguments
     =========
